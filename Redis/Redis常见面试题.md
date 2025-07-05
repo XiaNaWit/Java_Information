@@ -59,3 +59,8 @@ Redis 在实现有序集合（ZSet）时，使用的是跳表（SkipList），�
 
 > Redis单主的瓶颈不在于读写的并发，而在于内存容量，即使是一主多从也是不能解决该问题，因为一主多从架构下，多个slave的数据和master的完全一样。假如master是10G那slave也只能存10G数据。所以数据量受单主的影响。
 > 而这个时候又需要缓存海量数据，那就必须得有多主了，并且多个主保存的数据还不能一样。Redis官方给出的 Redis cluster 模式完美的解决了这个问题。
+
+
+# 参考文章
+- https://www.jianshu.com/p/53083f5f2ddc
+- https://cloud.tencent.com/developer/article/1608410
