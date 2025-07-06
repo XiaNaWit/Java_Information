@@ -1,6 +1,8 @@
 
-
 * [RocketMQ](#rocketmq)
+* [中间件介绍](#中间件介绍)
+        * [RocketMQ是什么？](#amqp是什么)
+        * [RabbitMQ特点](#rabbitmq特点)
   * [架构图](#架构图)
 * [组件](#组件)
   * [NameServer](#nameserver)
@@ -21,25 +23,92 @@
 
 
 # RocketMQ
+
+## 中间件介绍
+### RocketMQ是什么？	
+
+RocketMQ 是阿里巴巴开源的分布式消息中间件。支持事务消息、顺序消息、批量消息、定时消息、消息回溯等。它里面有几个区别于标准消息中件间的概念，如Group、Topic、Queue等。系统组成则由Producer、Consumer、Broker、NameServer等。
+
+**RocketMQ 特点**
+
+- 是一个队列模型的消息中间件，具有高性能、高可靠、高实时、分布式等特点
+- Producer、Consumer、队列都可以分布式
+- Producer 向一些队列轮流发送消息，队列集合称为 Topic，Consumer 如果做广播消费，则一个 Consumer 实例消费这个 Topic 对应的所有队列，如果做集群消费，则多个 Consumer 实例平均消费这个 Topic 对应的队列集合
+- 能够保证严格的消息顺序
+- 支持拉（pull）和推（push）两种消息模式
+- 高效的订阅者水平扩展能力
+- 实时的消息订阅机制
+- 亿级消息堆积能力
+- 支持多种消息协议，如 JMS、OpenMessaging 等
+- 较少的依赖
+
+## RocketMQ消费模式有几种？
+
+消费模型由Consumer决定，消费维度为Topic。
+
+1、集群消费
+
+* 一条消息只会被同Group中的一个Consumer消费
+
+* 多个Group同时消费一个Topic时，每个Group都会有一个Consumer消费到数据
+
+2、广播消费
+
+消息将对一 个Consumer Group 下的各个 Consumer 实例都消费一遍。即即使这些 Consumer 属于同一个Consumer Group ，消息也会被 Consumer Group 中的每个 Consumer 都消费一次。
+
+
+
 ## 架构图
 ![](../img/消息队列/rocketmq/架构图.png)
 # 组件
-## NameServer
+
+## RocketMQ由哪些角色组成，每个角色作用和特点是什么？
+
+| 角色       | 作用                                                         |
+| ---------- | ------------------------------------------------------------ |
+| Nameserver | 无状态，动态列表；这也是和zookeeper的重要区别之一。zookeeper是有状态的。 |
+| Producer   | 消息生产者，负责发消息到Broker。                             |
+| Broker     | 就是MQ本身，负责收发消息、持久化消息等。                     |
+| Consumer   | 消息消费者，负责从Broker上拉取消息进行消费，消费完进行ack。  |
+
+### NameServer
 NameServer 是一个功能齐全的服务器，主要包括两个功能：
 - Broker 管理，NameServer接受来自 Broker 集群的注册，并提供心跳机制来检查 Broker 是否处于活动状态。
 - 路由管理，每个 NameServer 将保存有关代理集群的完整路由信息和客户端查询的队列信息。
-## Broker
+### Broker
 Broker主要负责消息的存储、投递和查询以及服务高可用保证，为了实现这些功能，Broker包含了以下几个重要子模块
 - Remoting Module远程模块，代理的入口，处理来自客户端的请求。
 - Client Manager，管理客户端（Producer/Consumer），维护Consumer的topic订阅。
 - Store Service存储服务，提供简单的 API 来存储或查询物理磁盘中的消息。
 - HA Service，提供主代理和从代理之间的数据同步功能。
 - Index Service索引服务，通过指定的key为消息建立索引，并提供快速的消息查询。
+#### 问题：broker如何处理拉取请求的？
+回答：
+```
+Consumer首次请求Broker
 
+- Broker中是否有符合条件的消息
+```
+```
+- 有 
+
+- - 响应Consumer
+  - 等待下次Consumer的请求
+```
+```
+- 没有
+
+- - DefaultMessageStore#ReputMessageService#run方法
+  - PullRequestHoldService 来Hold连接，每个5s执行一次检查pullRequestTable有没有消息，有的话立即推送
+  - 每隔1ms检查commitLog中是否有新消息，有的话写入到pullRequestTable
+  - 当有新消息的时候返回请求
+  - 挂起consumer的请求，即不断开连接，也不返回数据
+  - 使用consumer的offset，
+  ```
 ![](../img/消息队列/rocketmq/broker.png)
-## Producer
+### Producer
 生产者 消息发布的角色，支持分布式集群方式部署。Producer通过MQ的负载均衡模块选择相应的Broker集群队列进行消息投递，投递的过程支持快速失败并且低延迟
-## Consumer
+### Consumer
 消费者 消息消费的角色，支持分布式集群方式部署。支持以push推，pull拉两种模式对消息进行消费。同时也支持集群方式和广播方式的消费，它提供实时消息订阅机制，可以满足大多数用户的需求。
 
 # 消息特性
@@ -65,6 +134,20 @@ Broker主要负责消息的存储、投递和查询以及服务高可用保证�
 
 `监控报警`：您可使用消息队列RocketMQ版提供的监控报警功能，监控某Group ID订阅的某Topic的消息消费状态并接收报警短信，帮助您实时掌握消息消费状态，以便及时处理消费异常。
 
+### 问题：RocketMQ消费消息是push还是pull？
+回答：
+```
+RocketMQ没有真正意义的push，都是pull，虽然有push类，但实际底层实现采用的是**长轮询机制**，即拉取方式
+
+> broker端属性 longPollingEnable 标记是否开启长轮询。默认开启
+```
+#### 追问：为什么要主动拉取消息而不使用事件监听方式？
+回答：
+```
+事件驱动方式是建立好长连接，由事件（发送数据）的方式来实时推送。
+
+如果broker主动推送消息的话有可能push速度快，消费速度慢的情况，那么就会造成消息在consumer端堆积过多，同时又不能被其他consumer消费的情况。而pull的方式可以根据当前自身情况来pull，不会造成过多的压力而造成瓶颈。所以采取了pull的方式。
+```
 
 # rocket的事务实现机制
 RocketMQ提供了事务消息的功能，采用2PC(两段式协议)+补偿机制（事务回查）的分布式事务功能，通过消息队列 RocketMQ 版事务消息能达到分布式事务的最终一致。
