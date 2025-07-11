@@ -265,7 +265,7 @@ MVCC， 即多版本并发控制。MVCC 的实现，是通过保存数据在某�
 
 我们拿上面的例子，对应解释下 MVCC 的实现原理，如下图：
 
-![img](http://blog-img.coolsen.cn/img/modb_95751916-225c-11eb-b0bb-5254001c05fe.png)
+![img](../../img/数据库/MySQL/MVCC实现原理.png)
 
 如图，首先 insert 语句向表 t1 中插入了一条数据，a 字段为 1，b 字段为 1， ROW ID 也为 1 ，事务 ID 假设为 1，回滚指针假设为 null。当执行 update t1 set b=666 where a=1 时，大致步骤如下：
 

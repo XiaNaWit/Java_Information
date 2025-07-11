@@ -331,7 +331,7 @@ SELECT * FROM `user` WHERE `name` LIKE '%冰';
 #### b+ tree
 - B+tree 非叶子节点只存储键值信息
 
-<img src="../img/数据库/MySQL/b加树.png" width="60%" />
+<img src="../../img/数据库/MySQL/b加树.png" width="60%" />
 
 - 叶子结点单链表有序
 - 利用磁盘预读特性
@@ -362,11 +362,11 @@ Innodb中一个指针是6字节长度。所以`主键ID+指针`总共就占14字
 所以，在实际中，绝大部分的表的索引树的高度都不会超过4。
 #### b tree
 所有节点都会储存信息
-<img src="../img/数据库/MySQL/b树.png" width="60%" />
+<img src="../../img/数据库/MySQL/b树.png" width="60%" />
 
 #### 联合索引的树存储结构
 
-<img src="../img/数据库/MySQL/联合索引结构.png" width="60%" />
+<img src="../../img/数据库/MySQL/联合索引结构.png" width="60%" />
 
 联合索引的所有索引列都出现在索引树上，并依次比较三列的大小。
 
@@ -441,13 +441,13 @@ Index Condition Pushdown (ICP)是MySQL用索引去表里取数据的一种优化
 
 关闭ICP：
 
-<img src="../img/数据库/MySQL/关闭icp.png" width="60%" />
+<img src="../../img/数据库/MySQL/关闭icp.png" width="60%" />
 
 此时，索引符合之前推文提过的最左前缀原理，当多列索引的某一列是范围查询后，之后的字段便不会走索引。
 
 开启ICP:
 
-<img src="../img/数据库/MySQL/开启ICP.png" width="60%" />
+<img src="../../img/数据库/MySQL/开启ICP.png" width="60%" />
 
 开启ICP后，查询同样符合最左前缀规则，但是当多列索引的某一列是范围查询后，之后的字段还是会被下推到存储引擎（Storage Engine）层进行条件判断，过滤出符合条件的数据后再返回给Server层。而由于在引擎层就能够过滤掉大量的数据，这样无疑能够减少了对base table和mysql server的访问次数。从而提升了性能。
 
@@ -515,7 +515,7 @@ ICP可以用于MyISAM和InnnoDB存储引擎，不支持分区表（5.7将会解�
 - MyISAM的索引与行记录是分开存储的，叫做非聚集索引（UnClustered Index）
 - 主键索引与普通索引是两棵独立的索引B+树，通过索引列查找时，先定位到B+树的叶子节点，再通过指针定位到行记录
 
-<img src="../img/数据库/MySQL/myISAM索引.png" width="60%" />
+<img src="../../img/数据库/MySQL/myISAM索引.png" width="60%" />
 
 ### InnoDB的索引
 InnoDB的主键索引与行记录是存储在一起的，故叫做聚集索引（Clustered Index）
@@ -523,7 +523,7 @@ InnoDB的主键索引与行记录是存储在一起的，故叫做聚集索引�
 - 主键索引的叶子节点，存储主键，与对应行记录（而不是指针）
 - 普通索引的叶子节点，存储主键
 
-<img src="../img/数据库/MySQL/innodb的索引.png" width="60%" />
+<img src="../../img/数据库/MySQL/innodb的索引.png" width="60%" />
 
 
 - 所以主键不宜用很长的列
@@ -537,13 +537,13 @@ InnoDB的主键索引与行记录是存储在一起的，故叫做聚集索引�
 ## 联合索引的底层组织方式
 数据：
 
-<img src="../img/数据库/MySQL/联合索引1.png" width="60%" />
+<img src="../../img/数据库/MySQL/联合索引1.png" width="60%" />
 
 现在建立联合索引(b,c,d)
 
 bcd联合索引在B+树上的结构图：
 
-<img src="../img/数据库/MySQL/联合索引2.png" width="60%" />
+<img src="../../img/数据库/MySQL/联合索引2.png" width="60%" />
 
 
 ### 联合索引具体查找步骤
@@ -555,4 +555,4 @@ bcd联合索引在B+树上的结构图：
 2. 进行一次磁盘IO，将此节点值加载后内存中，然后根据第一步一样进行判断，发现 数据都是匹配的，然后根据指针将此联合索引值所在的叶子节点也从磁盘中加载后内存，此时又发生了一次磁盘IO，最终根据叶子节点中索引值关联的 主键值  。
 3. 根据主键值  回表 去主键索引树（聚簇索引）中查询具体的行记录。
 
-<img src="../img/数据库/MySQL/联合索引3.png" width="60%" />
+<img src="../../img/数据库/MySQL/联合索引3.png" width="60%" />

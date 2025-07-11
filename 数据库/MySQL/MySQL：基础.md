@@ -31,7 +31,7 @@
 ## 储存引擎
 MySQL 5.7 支持的存储引擎有 InnoDB、MyISAM、Memory、Merge、Archive、CSV、BLACKHOLE 等。可以使用SHOW ENGINES;语句查看系统所支持的引擎类型
 
-<img src="../img/数据库/MySQL/MySQL储存引擎比较.png" width="50%" />
+<img src="../../img/数据库/MySQL/MySQL储存引擎比较.png" width="50%" />
 
 ### InnoDB
 特点
@@ -56,7 +56,7 @@ MySQL 5.7 支持的存储引擎有 InnoDB、MyISAM、Memory、Merge、Archive、
 ### InnoDB
 #### 架构图
 
-<img src="../img/数据库/MySQL/innodb架构图.png" width="50%" />
+<img src="../../img/数据库/MySQL/innodb架构图.png" width="50%" />
 
 #### 架构划分
 ##### 内存结构
@@ -115,19 +115,19 @@ buffer pool是主存中的一个区域，InnoDB在访问表和索引数据时在
 情况一
 
 
-<img src="../img/数据库/MySQL/写缓冲1.png" width="60%" />
+<img src="../../img/数据库/MySQL/写缓冲1.png" width="60%" />
 
 情况二
 
-<img src="../img/数据库/MySQL/写缓冲2.png" width="60%" />
+<img src="../../img/数据库/MySQL/写缓冲2.png" width="60%" />
 
 加入写缓冲优化
 
-<img src="../img/数据库/MySQL/写缓冲3.png" width="60%" />
+<img src="../../img/数据库/MySQL/写缓冲3.png" width="60%" />
 
 此后的读取情况
 
-<img src="../img/数据库/MySQL/写缓冲4.png" width="60%" />
+<img src="../../img/数据库/MySQL/写缓冲4.png" width="60%" />
 
 为什么写缓冲优化，仅适用于非唯一普通索引页呢？
 - 如果索引设置了唯一(unique)属性，在进行修改操作时，InnoDB必须进行唯一性检查。也就是说，索引页即使不在缓冲池，磁盘上的页读取无法避免(否则怎么校验是否唯一？)，此时就应该直接把相应的页放入缓冲池再进行修改
@@ -149,7 +149,7 @@ InnoDB的哈希索引
 1. InnoDB用户无法手动创建哈希索引，这一层上说，InnoDB确实不支持哈希索引；
 2. InnoDB会自调优(self-tuning)，如果判定建立自适应哈希索引(Adaptive Hash Index, AHI)，能够提升查询效率，InnoDB自己会建立相关哈希索引，这一层上说，InnoDB又是支持哈希索引的；
 - 原理
-<img src="../img/数据库/MySQL/自适应hash函数.png" width="60%" />
+<img src="../../img/数据库/MySQL/自适应hash函数.png" width="60%" />
 					
   - 为啥叫“自适应(adaptive)”哈希索引？
   - 系统自己判断“应该可以加速查询”而建立的，不需要用户手动建立，故称“自适应”。
