@@ -2,7 +2,7 @@
 
 ## 架构图
 
-<img src="../img/spring/spring架构图.png" width="50%" />
+<img src="../../img/spring/spring架构图.png" width="50%" />
 
 ## 模块
 

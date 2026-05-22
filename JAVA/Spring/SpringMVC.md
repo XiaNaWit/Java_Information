@@ -6,7 +6,7 @@
 
 # springMVC
 ## 流程
-![](../img/spring/springmvc流程.png)
+![](../../img/spring/springmvc流程.png)
 ## 执行流程
 1. **用户发送请求至前端控制器DispatcherServlet**
    1. DispatcherServlet：前端控制器。用户请求到达前端控制器，它就相当于mvc模式中的c，dispatcherServlet是整个流程控制的中心，由它调用其它组件处理用户的请求，dispatcherServlet的存在降低了组件之间的耦合性,系统扩展性提高。由框架实现

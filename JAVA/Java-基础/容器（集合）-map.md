@@ -1,5 +1,5 @@
 # Map
-![](../img/基础/Java容器类关系图.png)
+![](../../img/基础/Java容器类关系图.png)
 ## HashMap
 - 存储的结构是key-value键值对，不像Collection是单列集合
 - 阅读Map前最好知道什么是散列表和红黑树
@@ -13,7 +13,7 @@
     - 源码的注释，根据泊松分布原理发生冲突 并且链表长度为8的概率已经非常小了不到千万分之一
 - 底层是散列表+红黑树。初始容量为16，装载因子为0.75，每次扩容2倍
   - 为什么是0.75，时间和空间的权衡，如果太小比如0.5那么空间为一半的时候就发生扩容，浪费空间，太大如1，满了才扩容，hash冲突的概率大大增加，那为什么不是0.6或者0.8呢，这里估计是调优得出的参数 可以看看这篇文章 https://segmentfault.com/a/1190000023308658
-  - ![](../img/hashmap/HashMap链表结构.png)
+  - ![](../../img/hashmap/HashMap链表结构.png)
 
 
 ## 结构
@@ -42,7 +42,7 @@ static class Node<K,V> implements Map.Entry<K,V> {
 - ⑤.遍历table[i]，判断链表长度是否大于8，大于8的话把链表转换为红黑树，在红黑树中执行插入操作，否则进行链表的插入操作；遍历过程中若发现key已经存在直接覆盖value即可； 
 - ⑥.插入成功后，判断实际存在的键值对数量size是否超多了最大容量threshold，如果超过，进行扩容。
 
-![](../img/hashmap/HashMap插入流程.png)
+![](../../img/hashmap/HashMap插入流程.png)
 
 #### 插入代码
 ```java
@@ -298,7 +298,7 @@ void transfer(Entry[] newTable, boolean rehash) {
 }
 ```
 #### 在单线程情况下，假设A、B、C三个节点处在一个链表上，扩容后依然处在一个链表上，代码执行过程如下：
-![](../img/基础/jdk1.7hashmap单线程扩容流程.png)
+![](../../img/基础/jdk1.7hashmap单线程扩容流程.png)
 
 需要注意的几点是
 - 单链表在转移的过程中会被反转
@@ -312,7 +312,7 @@ void transfer(Entry[] newTable, boolean rehash) {
   newTable[i] = e;
   e = next;
 ```
-![](../img/基础/jdk1.7hashmap多线程扩容流程.png)
+![](../../img/基础/jdk1.7hashmap多线程扩容流程.png)
 ### jdk1.8的扩容
 ```java
 // 低位链表头节点，尾结点
@@ -429,7 +429,7 @@ JDK1.8 中，由于多线程对HashMap进行put操作，调用了HashMap#putVal(
 Segment 对象继承了 ReentrantLock 类，因为 Segment 对象它就变成了一把锁，这样就可以保证数据的安全。 在 Segment 对象中通过 HashEntry 数组来维护其内部的 hash 表。每个 HashEntry 就代表了 map 中的一个 K-V，如果发生 hash 冲突时，在该位置就会形成链表。
 
 JDK1.7 中，ConcurrentHashMap 的整体结构可以描述为下图的样子：
-![](../img/基础/jdk1.7concurrentHashmap整体结构.png)
+![](../../img/基础/jdk1.7concurrentHashmap整体结构.png)
 
 ##### put 方法
 ```java
@@ -517,7 +517,7 @@ static class Node<K,V> implements Map.Entry<K,V> {
 
 JDK1.8 中的 ConcurrentHashMap 结构如下图所示：
 
-![](../img/基础/jdk1.8concurrentHashmap整体结构.png)
+![](../../img/基础/jdk1.8concurrentHashmap整体结构.png)
 
 ##### putVal 方法
 ```java

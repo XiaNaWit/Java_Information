@@ -17,7 +17,7 @@ AQS内部通过内部类Node构成FIFO的同步队列来完成线程获取锁的
 - `private transient volatile Node tail;` //指向同步的队尾
 - `private volatile int state;` //同步状态，0代表锁未被占用，1代表锁已被占用
 ### 示意图
-![](../img/Java多线程/同步队列模型示意图.png)
+![](../../img/Java多线程/同步队列模型示意图.png)
 - head指向同步队列的头部，注意head为空结点，不存储信息
 - tail则是同步队列的队尾
 - 同步队列采用的是双向链表的结构这样可方便队列进行结点增删操作
@@ -227,7 +227,7 @@ private Node enq(final Node node) {
     }
 ```
 这个方法使用一个死循环进行CAS操作，可以解决多线程并发问题。这里做了两件事，一是如果还没有初始同步队列则创建新结点并使用compareAndSetHead设置头结点，tail也指向head，二是队列已存在，则将新结点node添加到队尾。注意这两个步骤都存在同一时间多个线程操作的可能，如果有一个线程修改head和tail成功，那么其他线程将继续循环，直到修改成功，这里使用CAS原子操作进行头结点设置和尾结点tail替换可以保证线程安全，从这里也可以看出head结点本身不存在任何数据，它只是作为一个牵头结点，而tail永远指向尾部结点(前提是队列不为null)。
-![](../img/Java多线程/node节点数据结构.png)
+![](../../img/Java多线程/node节点数据结构.png)
 
 添加到同步队列后，结点就会进入一个自旋过程，即每个结点都在观察时机待条件满足获取同步状态，然后从同步队列退出并结束自旋，回到之前的acquire()方法，自旋过程是在acquireQueued(addWaiter(Node.EXCLUSIVE), arg))方法中执行的，代码如下
 
@@ -274,7 +274,7 @@ private void setHead(Node node) {
 }
 ```
 设置为node结点被设置为head后，其thread信息和前驱结点将被清空，因为该线程已获取到同步状态(锁)，正在执行了，也就没有必要存储相关信息了，head只有保存指向后继结点的指针即可，便于head结点释放同步状态后唤醒后继结点，执行结果如下图
-![](../img/Java多线程/node节点数据结构2.png)
+![](../../img/Java多线程/node节点数据结构2.png)
 
 从图可知更新head结点的指向，将后继结点的线程唤醒并获取同步状态，调用setHead(node)将其替换为head结点，清除相关无用数据。当然如果前驱结点不是head，那么执行如下
 
@@ -317,7 +317,7 @@ private final boolean parkAndCheckInterrupt() {
 shouldParkAfterFailedAcquire()方法的作用是判断当前结点的前驱结点是否为SIGNAL状态(即等待唤醒状态)，如果是则返回true。如果结点的ws为CANCELLED状态(值为1>0),即结束状态，则说明该前驱结点已没有用应该从同步队列移除，执行while循环，直到寻找到非CANCELLED状态的结点。倘若前驱结点的ws值不为CANCELLED，也不为SIGNAL(当从Condition的条件等待队列转移到同步队列时，结点状态为CONDITION因此需要转换为SIGNAL)，那么将其转换为SIGNAL状态，等待被唤醒。
 
 若shouldParkAfterFailedAcquire()方法返回true，即前驱结点为SIGNAL状态同时又不是head结点，那么使用parkAndCheckInterrupt()方法挂起当前线程，称为WAITING状态，需要等待一个unpark()操作来唤醒它，到此ReetrantLock内部间接通过AQS的FIFO的同步队列就完成了lock()操作，这里我们总结成逻辑流程图
-![](../img/Java多线程/aqs-lock流程.png)
+![](../../img/Java多线程/aqs-lock流程.png)
 
 关于获取锁的操作，这里看看另外一种可中断的获取方式，即调用ReentrantLock类的lockInterruptibly()或者tryLock()方法，最终它们都间接调用到doAcquireInterruptibly()
 ```java
@@ -681,7 +681,7 @@ Condition的具体实现类是AQS的内部类`ConditionObject`，前面我们分
 
 当一个线程调用了await()相关的方法，那么该线程将会释放锁，并构建一个Node节点封装当前线程的相关信息加入到等待队列中进行等待，直到被唤醒、中断、超时才从队列中移出。Condition中的等待队列模型如下
 
-![](../img/Java多线程/condition中的等待队列模型.png)
+![](../../img/Java多线程/condition中的等待队列模型.png)
 
 正如图所示，Node节点的数据结构，在等待队列中使用的变量与同步队列是不同的，Condtion中等待队列的结点只有直接指向的后继结点并没有指明前驱结点，而且使用的变量是nextWaiter而不是next，这点我们在前面分析结点Node的数据结构时讲过。
 
@@ -812,7 +812,7 @@ final boolean transferForSignal(Node node) {
 
 流程如下图所示（注意无论是同步队列还是等待队列使用的Node数据结构都是同一个，不过是使用的内部变量不同罢了）
 
-![](../img/Java多线程/等待唤醒机制的流程实现原理.png)
+![](../../img/Java多线程/等待唤醒机制的流程实现原理.png)
 
 ## 同步工具类
 ### CountDownLatch

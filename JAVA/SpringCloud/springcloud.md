@@ -110,11 +110,11 @@ Nacos 实现服务发现和注册的核心代码位于 nacos/naming 目录下，
 
 Nacos 没有采用上述的两种模式，而是采用了长轮询方式结合了推和拉的优点：
 
-<img src="../img/springcloud/nacos/nacosconfig动态刷新机制.png" width="50%" />
+<img src="../../img/springcloud/nacos/nacosconfig动态刷新机制.png" width="50%" />
 
 长轮询也是轮询，因此 Nacos 客户端会默认每10ms向服务端发起请求，当客户端请求服务端时会在请求头上携带长轮询的超时时间，默认是30s。而服务端接收到该请求时会hang住请求，为了防止客户端超时会在请求头携带的超时时间上减去500ms，因此默认会hang住请求29.5s。在这期间如果服务端发生了配置变更会产生相应的事件，监听到该事件后，会响应对应的客户端。这样一来客户端不会频繁发起轮询请求，而服务端也不需要维持与客户端的心跳，兼备了时效性和复杂度。
 
-<img src="../img/springcloud/nacos/nacosonfig动态刷新流程图.png" width="80%" />
+<img src="../../img/springcloud/nacos/nacosonfig动态刷新流程图.png" width="80%" />
 
 
 > 1.4版本nacos使用Http短连接+长轮询的方式，客户端发起http请求，服务端hold住请求，当配置变更时响应客户端，超时时间30s。
@@ -658,11 +658,11 @@ public interface ProcessorSlot<T> {
 ```
 总体的框架如下:
 
-![](../img/springcloud/sentinel/sentinel-slot.png)
+![](../../img/springcloud/sentinel/sentinel-slot.png)
 
 Sentinel 将 SlotChainBuilder 作为 SPI 接口进行扩展，使得 Slot Chain 具备了扩展的能力。您可以自行加入自定义的 slot 并编排 slot 间的顺序，从而可以给 Sentinel 添加自定义的功能。
 
-![](../img/springcloud/sentinel/Sentinel-自定义slot.png)
+![](../../img/springcloud/sentinel/Sentinel-自定义slot.png)
 
 #### RuleManager 规则管理器
 每个 Slot 插槽背后都对应着一个 RuleManager 的实现类，简单理解就是每个 Slot 有一套规则，规则验证处理由对应的 RuleManager 来进行处理。
@@ -680,15 +680,15 @@ Sentinel 将 SlotChainBuilder 作为 SPI 接口进行扩展，使得 Slot Chain 
 
 RT：平均响应时间 (DEGRADE_GRADE_RT)：当 1s 内持续进入 5 个请求，对应时刻的平均响应时间（秒级）均超过阈值（count，以 ms 为单位），那么在接下的时间窗口（DegradeRule 中的 timeWindow，以 s 为单位）之内，对这个方法的调用都会自动地熔断（抛出 DegradeException）。注意 Sentinel 默认统计的 RT 上限是 4900 ms，超出此阈值的都会算作 4900 ms，若需要变更此上限可以通过启动配置项 -Dcsp.sentinel.statistic.max.rt=xxx 来配置。
 
-![](../img/springcloud/sentinel/降级-RT.png)
+![](../../img/springcloud/sentinel/降级-RT.png)
 
 异常比例：当资源的每秒请求量 >= 5，并且每秒异常总数占通过量的比值超过阈值（DegradeRule 中的 count）之后，资源进入降级状态，即在接下的时间窗口（DegradeRule 中的 timeWindow，以 s 为单位）之内，对这个方法的调用都会自动地返回。异常比率的阈值范围是 [0.0, 1.0]，代表 0% - 100%。
 
-![](../img/springcloud/sentinel/降级-异常比例.png)
+![](../../img/springcloud/sentinel/降级-异常比例.png)
 
 异常数：当资源近 1 分钟的异常数目超过阈值之后会进行熔断。注意由于统计时间窗口是分钟级别的，若 timeWindow 小于 60s，则结束熔断状态后仍可能再进入熔断状态。
 
-![](../img/springcloud/sentinel/降级-异常数.png)
+![](../../img/springcloud/sentinel/降级-异常数.png)
 
 限流结果信息
 
@@ -816,11 +816,11 @@ FlowSlot 会根据预设的规则，结合前面 NodeSelectorSlot、ClusterNodeB
 
 流控-QPS配置
 
-![](../img/springcloud/sentinel/流控-QPS配置.png)
+![](../../img/springcloud/sentinel/流控-QPS配置.png)
 
 流控-线程数配置
 
-![](../img/springcloud/sentinel/流控-线程数配置.png)
+![](../../img/springcloud/sentinel/流控-线程数配置.png)
 
 ##### 实现流程
 Sentinel 提供了 FlowSlot 用来进行流量控制，流量规则的最终实现在 FlowRuleChecker 的 checkFlow 中实现的。
