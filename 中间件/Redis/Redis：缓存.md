@@ -53,7 +53,7 @@ public void write(String key,Object data){
 
 如果使用的是 Mysql 的读写分离的架构的话，那么其实主从同步之间也会有时间差。
 
-![主从同步时间差](../img/redis/主从同步时间差.png)
+![主从同步时间差](../../img/redis/主从同步时间差.png)
 
 此时来了两个请求，请求 A（更新操作） 和请求 B（查询操作）
 ```
@@ -67,7 +67,7 @@ public void write(String key,Object data){
 
 
 
-![从主库中拿数据](../img/redis/从主库中拿数据.png)
+![从主库中拿数据](../../img/redis/从主库中拿数据.png)
 
 #### 答案二： **更新与读取操作进行异步串行化**
 
@@ -89,7 +89,7 @@ public void write(String key,Object data){
 
 这一种情况也会出现问题，比如更新数据库成功了，但是在删除缓存的阶段出错了没有删除成功，那么此时再读取缓存的时候每次都是错误的数据了。
 
-![先更新数据库，后删除缓存](../img/redis/先更新数据库，后删除缓存.png)
+![先更新数据库，后删除缓存](../../img/redis/先更新数据库，后删除缓存.png)
 
 此时解决方案就是利用消息队列进行删除的补偿。具体的业务逻辑用语言描述如下：
 ```
@@ -100,7 +100,7 @@ public void write(String key,Object data){
 ```
 但是这个方案会有一个缺点就是会对业务代码造成大量的侵入，深深的耦合在一起，所以这时会有一个优化的方案，我们知道对 Mysql 数据库更新操作后再 binlog 日志中我们都能够找到相应的操作，那么我们可以订阅 Mysql 数据库的 binlog 日志对缓存进行操作。
 
-![利用订阅 binlog 删除缓存](../img/redis/利用订阅%20binlog%20删除缓存.png)
+![利用订阅 binlog 删除缓存](../../img/redis/利用订阅%20binlog%20删除缓存.png)
 
 
 ## 常问故障场景
@@ -157,7 +157,7 @@ public void write(String key,Object data){
 
 >  缓存穿透的关键在于在Redis中查不到key值，它和缓存击穿的根本区别在于传进来的key在Redis中是不存在的。假如有黑客传进大量的不存在的key，那么大量的请求打在数据库上是很致命的问题，所以在日常开发中要对参数做好校验，一些非法的参数，不可能存在的key就直接返回错误提示。
 
-![img](../img/redis/缓存穿透.png)
+![img](../../img/redis/缓存穿透.png)
 
 **解决方法：**
 ```

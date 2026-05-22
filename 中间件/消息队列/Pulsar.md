@@ -73,7 +73,7 @@
 # Apache Pulsar 架构
 Apache Pulsar 是一个发布-订阅模型的消息系统，由 Broker、Apache BookKeeper、Producer、Consumer 等组件组成。
 
-![](../img/消息队列/pulsar/puslar架构.png)
+![](../../img/消息队列/pulsar/puslar架构.png)
 
 - Producer ： 消息的生产者，负责发布消息到 Topic。
 - Consumer：消息的消费者，负责从 Topic 订阅消息。
@@ -92,12 +92,12 @@ Pulsar 的 Topic 分为 Partitioned Topic 和 Non-Partitioned Topic 两类，Non
 
 如下图所示，分区 Topic1-Part2 的数据由N个 Segment 组成， 每个 Segment 均匀分布并存储在 Apache BookKeeper 群集中的多个 Bookie 节点中， 每个 Segment 具有3个副本。
 
-![](../img/消息队列/pulsar/topic与分区.png)
+![](../../img/消息队列/pulsar/topic与分区.png)
 
 ## 物理分区与逻辑分区
 逻辑分区和物理分区对比如下：
 
-![](../img/消息队列/pulsar/物理分区和逻辑分区.png)
+![](../../img/消息队列/pulsar/物理分区和逻辑分区.png)
 
 物理分区：计算与存储耦合，容错需要拷贝物理分区，扩容需要迁移物理分区来达到负载均衡。
 
@@ -118,7 +118,7 @@ partition-index：指分区的编号，在非分区 topic 的时候为 -1。
 batch-index：在非批量消息的时候为 -1。
 消息 ID 的生成规则由 Pulsar 的消息存储机制决定，Pulsar 中消息存储原理图如下：
 
-![](../img/消息队列/pulsar/消息储存原理.png)
+![](../../img/消息队列/pulsar/消息储存原理.png)
 
 如上图所示，在 Pulsar中，一个 Topic 的每一个分区会对应一系列的 ledger，其中只有一个 ledger 处于 open 状态即可写状态，而每个 ledger 只会存储与之对应的分区下的消息。
 
@@ -150,7 +150,7 @@ IndexCache 容量达到上限时，会被 sync 线程 flush 到磁盘中。
 
 三类数据文件的读写交互如下图：
 
-![](../img/消息队列/pulsar/三类数据文件的读写交互.png)
+![](../../img/消息队列/pulsar/三类数据文件的读写交互.png)
 
 ### Entry 数据写入
 
@@ -181,16 +181,16 @@ Ledger 和 entry 分别对应不同的元数据。
 - ledger 的元数据存储在 zk 上。
 - entry 除了消息数据部分之外，还包含元数据，entry 的数据存储在 bookie 存储节点上。
 
-![](../img/消息队列/pulsar/ledger和entry对应的数据.png)
+![](../../img/消息队列/pulsar/ledger和entry对应的数据.png)
 
-![](../img/消息队列/pulsar/ledger和entry对比.png)
+![](../../img/消息队列/pulsar/ledger和entry对比.png)
 
 每个 ledger 在创建的时候，会在现有的 BookKeeper 集群中的可写状态的 bookie 候选节点列表中，选用 ensemble size 对应个数的 bookie 节点，如果没有足够的候选节点则会抛出 BKNotEnoughBookiesExceptio 异常。选出候选节点后，将这些信息组成 <entry id, ensembles> 元组，存储到 ledger 的元数据里的 ensembles 中。
 
 ## 消息副本机制
 消息写入流程
 
-![](../img/消息队列/pulsar/消息写入流程.png)
+![](../../img/消息队列/pulsar/消息写入流程.png)
 
 客户端在写入消息时，每个 entry 会向 ledger 当前使用的 ensemble 列表中的 Qw 个 bookie 节点发送写入请求，当收到 Qa 个写确认后，即认为当前消息写入存储成功。同时会通过 LAP（lastAddPushed）和 LAC（LastAddConfirmed）分别标识当前推送的位置和已经收到存储确认的位置。
 
@@ -202,7 +202,7 @@ Ledger 和 entry 分别对应不同的元数据。
 
 每个 entry 写入时，会根据当前消息的 entry id 和当前使用的 ensembles 列表的开始 entry id（即key值），计算出在当前 entry 需要使用 ensemble 列表中由哪组 Qw 个 bookie 节点进行写入。之后，broker 会向这些 bookie 节点发送写请求，当收到 Qa 个写确认后，即认为当前消息写入存储成功。这时至少能够保证 Qa 个消息的副本个数。
 
-![](../img/消息队列/pulsar/消息副本.png)
+![](../../img/消息队列/pulsar/消息副本.png)
 
 如上图所示，ledger 选用了4个 bookie 节点（bookie1-4 这4个节点），每次写入3个节点，当收到2个写入确认即代表消息存储成功。当前 ledger 选中的 ensemble 从 entry 1开始，使用 bookie1、bookie2、bookie3 进行写入，写入 entry 2的时候选用 bookie2、bookie3、bookie4写入，而 entry 3 则会根据计算结果，写入 bookie3、bookie4、bookie1。
 
@@ -236,7 +236,7 @@ Fragment 的数据用新的 bookie 节点进行数据恢复完毕后，更新 le
 - 如果您想实现传统的“消息队列” 形式，可以使多个消费者使用同一个的订阅名称（共享、灾备）。
 - 如果您想同时实现以上两点，可以让一些消费者使用独占方式，剩余消费者使用其他方式。
 
-![](../img/消息队列/pulsar/消息模式.png)
+![](../../img/消息队列/pulsar/消息模式.png)
 
 ## 独占模式（Exclusive）
 如果两个及以上的消费者尝试以同样方式去订阅主题，消费者将会收到错误，适用于全局有序消费的场景。

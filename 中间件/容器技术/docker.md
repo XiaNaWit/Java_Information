@@ -124,7 +124,7 @@ Docker 采用了 C/S 架构，包括客户端和服务端。Docker 守护进程 
 Docker 守护进程一般在宿主主机后台运行，等待接收来自客户端的消息。
 
 Docker 客户端则为用户提供一系列可执行命令，用户用这些命令实现跟 Docker 守护进程交互。
-![](../img/容器技术/docker/docker应用架构.png)
+![](../../img/容器技术/docker/docker应用架构.png)
 ## 底层实现原理
 Docker 底层的核心技术包括 Linux 上的命名空间（Namespaces）、控制组（Control groups）、Union 文件系统（Union file systems）和容器格式（Container format）。
 

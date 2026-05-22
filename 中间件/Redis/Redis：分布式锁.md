@@ -174,5 +174,5 @@ RedLock官方推荐，Redisson完成了对Redlock算法封装。
 
 算法示意图如下：
 
-![image-20210829131128229](../img/redis/RedLock算法原理.png)
+![image-20210829131128229](../../img/redis/RedLock算法原理.png)
 

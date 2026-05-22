@@ -80,7 +80,7 @@ Zookeeper使用Watcher机制实现分布式数据的发布/订阅功能
 
 整个Watcher注册与通知过程如图所示。
 
-![](../img/消息队列/zookeeper/监听机制.png)
+![](../../img/消息队列/zookeeper/监听机制.png)
 
 - Client向ZK注册监听器。监听某个目录 可以监听下面的子节点， 也可以监听下面的数据。
 - 客户端在向Zookeeper服务器注册的同时，会将Watcher对象存储在客户端的WatcherManager当中。用来对各种监听器进行管理。
@@ -260,7 +260,7 @@ zookeeper 的 leader 选举存在两个阶段，一个是服务器启动时 lead
 4. 统计投票。每次投票后，服务器统计投票信息，判断是都有过半机器接收到相同的投票信息。server1、server2 都统计出集群中有两台机器接受了（2,0）的投票信息，此时已经选出了 server2 为 leader 节点。
 5. 改变服务器状态。一旦确定了 leader，每个服务器响应更新自己的状态，如果是 follower，那么就变更为 FOLLOWING，如果是 Leader，变更为 LEADING。此时 server3继续启动，直接加入变更自己为 FOLLOWING。
 
-![](../img/消息队列/zookeeper/选取流程.png)
+![](../../img/消息队列/zookeeper/选取流程.png)
 ## 2、运行过程中的 leader 选举
 当集群中 leader 服务器出现宕机或者不可用情况时，整个集群无法对外提供服务，进入新一轮的 leader 选举。
 

@@ -114,14 +114,14 @@ min-slaves-max-lag 10
 哨兵模式是一种特殊的模式，首先 Redis 提供了哨兵的命令，哨兵是一个独立的进程，作为进程，它会独立运行。其原理是哨兵通过发送命令，等待Redis服务器响应，从而监控运行的多个 Redis 实例
 
 #### 原理图
-<img src="../img/redis/哨兵模式.png" width="50%" />
+<img src="../../img/redis/哨兵模式.png" width="50%" />
 
 #### 哨兵模式的作用
 - 通过发送命令，让 Redis 服务器返回监控其运行状态，包括主服务器和从服务器；
 - 当哨兵监测到 master 宕机，会自动将 slave 切换成 master ，然后通过发布订阅模式通知其他的从服务器，修改配置文件，让它们切换主机；
 
 #### 多哨兵模式
-<img src="../img/redis/多哨兵模式.png" width="50%" />
+<img src="../../img/redis/多哨兵模式.png" width="50%" />
 
 一个哨兵进程对Redis服务器进行监控，也可能会出现问题，为此，我们可以使用多个哨兵进行监控。各个哨兵之间还会进行监控，这样就形成了多哨兵模式
 
@@ -215,13 +215,13 @@ Redis Cluster是一种服务器 Sharding 技术，3.0版本开始正式提供。
 ##### 数据分区方式
 ###### 顺序分布
 
-<img src="../img/redis/cluster数据分布方式-顺序分布.png" width="50%" />
+<img src="../../img/redis/cluster数据分布方式-顺序分布.png" width="50%" />
   
 特点：键值业务相关；数据分散，但是容易造成访问倾斜；支持顺序访问；支持批量操作
 
 ###### 哈希分布
 
-<img src="../img/redis/cluster数据分布方式-hash分布.png" width="50%" />
+<img src="../../img/redis/cluster数据分布方式-hash分布.png" width="50%" />
 
 特点：数据分散度高；键值分布与业务无关；不支持顺序访问；支持批量操作。
 
@@ -231,7 +231,7 @@ Redis Cluster是一种服务器 Sharding 技术，3.0版本开始正式提供。
 
 增加节点
 
-<img src="../img/redis/一致性hash增加节点.png" width="50%" />
+<img src="../../img/redis/一致性hash增加节点.png" width="50%" />
     
 - 如上图所示，总共10个数据通过节点取余hash(key)%/3 的方式分布到3个节点，这时候由于访问量变大，要进行扩容，由 3 个节点变为 4 个节点。
 - 我们发现，如图所示，数据除了标红的1 2 没有进行迁移，别的数据都要进行变动，达到了80%，如果这时候并发很高，80%的数据都要从下层节点（比如数据库）获取，会给下层节点造成很大的访问压力，这是不能接受的。
@@ -239,7 +239,7 @@ Redis Cluster是一种服务器 Sharding 技术，3.0版本开始正式提供。
    
 删除节点
 
-<img src="../img/redis/一致性hash删除节点.png" width="50%" />
+<img src="../../img/redis/一致性hash删除节点.png" width="50%" />
 
 上图其实不管是哪一个节点宕机，其数据迁移量都会超过50%。基本上也是我们所不能接受的 
 
@@ -247,7 +247,7 @@ Redis Cluster是一种服务器 Sharding 技术，3.0版本开始正式提供。
       
 - 原理图
 
-<img src="../img/redis/一致性hash原理图.png" width="30%" />
+<img src="../../img/redis/一致性hash原理图.png" width="30%" />
 
 假设有一个哈希环，从0到2的32次方，均匀的分成三份，中间存放三个节点，沿着顺时针旋转，从Node1到Node2之间的数据，存放在Node2节点上；从Node2到Node3之间的数据，存放在Node3节点上，依次类推。
 
@@ -260,14 +260,14 @@ Redis Cluster是一种服务器 Sharding 技术，3.0版本开始正式提供。
   - objec1->cache A2 ； objec2->cache A1 ； objec3->cache C1 ； objec4->cache C2 ；
 - 因此对象 object1 和 object2 都被映射到了 cache A 上，而 object3 和 object4 映射到了 cache C 上；平衡性有了很大提高。 引入“虚拟节点”后，映射关系就从 { 对象 -> 节点 } 转换到了 { 对象 -> 虚拟节点 } 。查询物体所在 cache 时的映射关系如下图 所示
 
-<img src="../img/redis/虚拟节点.png" width="50%" />
+<img src="../../img/redis/虚拟节点.png" width="50%" />
 
 #### Redis Cluster虚拟槽分区
 Redis集群数据分布没有使用一致性哈希分布，而是使用虚拟槽分区概念
 
 Redis内部内置了序号 0-16383 个槽位，每个槽位可以用来存储一个数据集合，将这些槽位按顺序分配到集群中的各个节点。每次新的数据到来，会通过哈希函数 CRC16(key) 算出将要存储的槽位下标，然后通过该下标找到前面分配的Redis节点，最后将数据存储到该节点中
 
-<img src="../img/redis/redis-hash槽.png" width="50%" />
+<img src="../../img/redis/redis-hash槽.png" width="50%" />
 
 特点
 - 解耦 数据 和 节点 之间的关系，简化了节点 扩容 和 收缩 难度。
@@ -316,12 +316,12 @@ Redis 集群的定时 PING/PONG 的工作原理可以概括成两点：
 
 下图显示了两个实例间进行 PING、PONG 消息传递的情况，其中实例一为发送节点，实例二是接收节点
 
-![](../img/redis/redis-cluster-pingpong.png)
+![](../../img/redis/redis-cluster-pingpong.png)
 
 #### 新节点上线
 Redis Cluster 加入新节点时，客户端需要执行 CLUSTER MEET 命令，如下图所示。
 
-![](../img/redis/redis-cluster-新节点上线.png)
+![](../../img/redis/redis-cluster-新节点上线.png)
 
 节点一在执行 CLUSTER MEET 命令时会首先为新节点创建一个 clusterNode 数据，并将其添加到自己维护的 clusterState 的 nodes 字典中。有关 clusterState 和 clusterNode 关系，我们在最后一节会有详尽的示意图和源码来讲解。
 
@@ -336,27 +336,27 @@ MEET 操作成功之后，节点一会通过稍早时讲的定时 PING 机制将
 #### 节点疑似下线和真正下线
 Redis Cluster 中的节点会定期检查已经发送 PING 消息的接收方节点是否在规定时间 ( cluster-node-timeout ) 内返回了 PONG 消息，如果没有则会将其标记为疑似下线状态，也就是 PFAIL 状态，如下图所示。
 
-![](../img/redis/节点疑似下线和真正下线1.png)
+![](../../img/redis/节点疑似下线和真正下线1.png)
 
 然后，节点一会通过 PING 消息，将节点二处于疑似下线状态的信息传递给其他节点，例如节点三。节点三接收到节点一的 PING 消息得知节点二进入 PFAIL 状态后，会在自己维护的 clusterState 的 nodes 字典中找到节点二所对应的 clusterNode 结构，并将主节点一的下线报告添加到 clusterNode 结构的 fail_reports 链表中。
 
-![](../img/redis/节点疑似下线和真正下线2.png)
+![](../../img/redis/节点疑似下线和真正下线2.png)
 
 随着时间的推移，如果节点十 (举个例子) 也因为 PONG 超时而认为节点二疑似下线了，并且发现自己维护的节点二的 clusterNode 的 fail_reports 中有半数以上的主节点数量的未过时的将节点二标记为 PFAIL 状态报告日志，那么节点十将会把节点二将被标记为已下线 FAIL 状态，并且节点十会立刻向集群其他节点广播主节点二已经下线的 FAIL 消息，所有收到 FAIL 消息的节点都会立即将节点二状态标记为已下线。如下图所示。
 
-![](../img/redis/节点疑似下线和真正下线3.png)
+![](../../img/redis/节点疑似下线和真正下线3.png)
 
 需要注意的是，报告疑似下线记录是由时效性的，如果超过 cluster-node-timeout *2 的时间，这个报告就会被忽略掉，让节点二又恢复成正常状态。
 
 
 ### Redis cluster伸缩的原理
 #### 集群扩容
-<img src="../img/redis/Redis-cluster扩容原理.png" width="50%" />
+<img src="../../img/redis/Redis-cluster扩容原理.png" width="50%" />
 
 每个master把一部分槽和数据迁移到新的节点node04
 
 #### 集群收缩
-<img src="../img/redis/Redis-cluster收缩原理.png" width="50%" />
+<img src="../../img/redis/Redis-cluster收缩原理.png" width="50%" />
 
 - 如果下线的是slave，那么通知其他节点忘记下线的节点
 - 如果下线的是master，那么将此master的slot迁移到其他master之后，通知其他节点忘记此master节点
