@@ -133,10 +133,6 @@ Queue<T> queue = new LinkedList<>();
 BlockingQueue（阻塞队列）详解 https://www.cnblogs.com/aspirant/p/8657801.html
 
 # 参考文章
-- https://segmentfault.com/a/1190000021237438
-- https://mp.weixin.qq.com/s/H6lxTfpedzzDz2QXihhdmw
-- https://segmentfault.com/a/1190000023308658
-- https://blog.csdn.net/weixin_39797532/article/details/112337531
 - https://pdai.tech/md/java/collection/java-collection-all.html
 
 

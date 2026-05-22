@@ -1,41 +1,68 @@
+# Object
 
-* [equals](#equals)
-* [hashcode](#hashcode)
-* [toString](#tostring)
-* [clone](#clone)
-* [wait](#wait)
-* [notify](#notify)
-* [finalize](#finalize)
-* [重写了equals后为什么要重写hashcode，如果不重写，会有什么影响](#重写了equals后为什么要重写hashcode如果不重写会有什么影响)
+Object 是所有类的根类。
 
-# equals
-- 对于基本类型，== 判断两个值是否相等，基本类型没有 equals() 方法。
-- 对于引用类型，== 判断两个变量是否引用同一个对象（即是否指向同一个内存地址），而 equals() 判断引用的对象是否等价(默认情况下，Object 类中的 equals() 方法与 == 相同，但许多类重写了这个方法，需要判断重写后的方法返回的内容来判断是否相同来判断对象是否相等)。
-# hashcode
-- hashCode() 返回散列值，而 equals() 是用来判断两个对象是否等价。等价的两个对象散列值一定相同，但是散列值相同的两个对象不一定等价。
-- 在覆盖 equals() 方法时应当总是覆盖 hashCode() 方法，保证等价的两个对象散列值也相等。
-  - 重写equals的一般步骤 
-    - 检查两个对象是否为同一个对象，如果是，则返回true。 
-    - 检查传入的对象是否为空，如果是，则返回false。 
-    - 检查传入的对象是否与当前对象属于同一类，如果不是，则返回false。 
-    - 将传入的对象转换成当前对象的类型。 
-    - 比较两个对象的属性是否相等，如果都相等，则返回true，否则返回false。
-- hashCode方法实际上必须要完成的一件事情就是，为该equals方法认定为相同的对象返回相同的哈希值
-# toString
-- 一般生成对象字符串
-# clone
-- 浅拷贝
-- 引用一个对象，拷贝基本数据类型的值，引用类型只拷贝引用
-- 深拷贝
-- 引用不同对象，拷贝基本数据类型的值，引用类型创建新对象
-# wait
-- 挂起线程
-# notify
-- 唤醒线程
-# finalize
-- GC时调用，回收资源
+## equals
 
-# 重写了equals后为什么要重写hashcode，如果不重写，会有什么影响
-- 每个覆盖了equals方法的类中，必须覆盖hashCode。如果不这么做，就违背了hashCode的通用约定。进而导致该类无法结合所以与散列的集合一起正常运作，这里指的是HashMap、HashSet、HashTable、ConcurrentHashMap。
-  - hashcode源码注释中的大致意思是：当我们将equals方法重写后有必要将hashCode方法也重写，这样做才能保证不违背hashCode方法中“相同对象必须有相同哈希值”的约定
-- 比如hashmap里的put操作就会判断key的hashcode是否相等，如果出现重写了equals但未重写hashcode，则可能出现这种情况：hashMap.put("k","v1")，hashMap.put("k":"v2")，而不是使用v2替换v1的值，这样我们的HashMap就乱套了
+- 基本类型：`==` 比较值
+- 引用类型：`==` 比较引用地址，`equals()` 比较等价性
+- Object 默认的 `equals()` 与 `==` 相同，子类通常需重写
+
+## hashCode
+
+- 等价的对象散列值一定相同，散列值相同的对象不一定等价
+- 重写 `equals()` **必须**重写 `hashCode()`，否则无法与散列集合（HashMap、HashSet 等）正常运作
+- 重写 `hashCode()` 的通用约定：`equals()` 认定为相同的对象必须返回相同的哈希值
+
+### 重写 equals 的一般步骤
+
+1. 检查是否为同一个对象引用（`==`）→ true 则返回 true
+2. 检查传入对象是否为 null → true 则返回 false
+3. 检查是否属于同一类（`getClass()` 或 `instanceof`）→ false 则返回 false
+4. 转型后比较关键字段
+
+## toString
+
+返回对象的字符串表示，默认格式为 `类名@哈希值的十六进制`，建议重写。
+
+## clone
+
+| 拷贝方式 | 行为 |
+|:---|:---|
+| **浅拷贝** | 拷贝基本类型值，引用类型只拷贝引用（新旧对象共享引用对象） |
+| **深拷贝** | 拷贝基本类型值，引用类型创建新对象 |
+
+实现克隆需实现 `Cloneable` 标记接口（否则调用 `super.clone()` 会抛 `CloneNotSupportedException`）。
+
+```java
+@Override
+protected Object clone() throws CloneNotSupportedException {
+    return super.clone();  // 浅拷贝
+}
+```
+
+## wait / notify / notifyAll
+
+必须在 `synchronized` 块中调用，否则抛 `IllegalMonitorStateException`。
+
+| 方法 | 说明 |
+|:---|:---|
+| `wait()` | 释放锁并挂起当前线程，等待被唤醒 |
+| `wait(long timeout)` | 超时等待（毫秒） |
+| `notify()` | 唤醒一个等待该对象的线程 |
+| `notifyAll()` | 唤醒所有等待该对象的线程 |
+
+## finalize
+
+GC 回收对象前调用，**Java 9 起已弃用**。不应依赖它释放资源，应使用 `try-with-resources` 或 `Cleaner`。
+
+## 为什么重写 equals 必须重写 hashCode
+
+如果不重写 hashCode，两个 `equals()` 相等的对象可能具有不同的哈希值，导致 HashMap 等散列集合将这两个对象放在不同的桶中，从而出现逻辑错误：
+
+```java
+// 假设仅重写 equals 未重写 hashCode
+Map<Person, String> map = new HashMap<>();
+map.put(new Person("Tom"), "value1");
+map.get(new Person("Tom"));   // → null（因为 hashCode 不同，定位到不同桶）
+```
