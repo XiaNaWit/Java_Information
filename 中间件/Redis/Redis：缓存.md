@@ -100,7 +100,7 @@ public void write(String key,Object data){
 ```
 但是这个方案会有一个缺点就是会对业务代码造成大量的侵入，深深的耦合在一起，所以这时会有一个优化的方案，我们知道对 Mysql 数据库更新操作后再 binlog 日志中我们都能够找到相应的操作，那么我们可以订阅 Mysql 数据库的 binlog 日志对缓存进行操作。
 
-![利用订阅 binlog 删除缓存](../../img/redis/利用订阅%20binlog%20删除缓存.png)
+![利用订阅 binlog 删除缓存](../../img/redis/利用订阅 binlog 删除缓存.png)
 
 
 ## 常问故障场景
