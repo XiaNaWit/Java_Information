@@ -1,5 +1,38 @@
 # Map
-![](../../img/基础/Java容器类关系图.png)
+
+## 目录
+- [HashMap](#HashMap)
+  - [特点](#特点)
+  - [结构](#结构)
+    - [Node[] table，即哈希桶数组](#Node[]-table，即哈希桶数组)
+    - [插入](#插入)
+      - [插入流程](#插入流程)
+      - [插入代码](#插入代码)
+      - [hash冲突使用链地址法](#hash冲突使用链地址法)
+      - [HashMap的容量为什么要初始化为2的n次幂](#HashMap的容量为什么要初始化为2的n次幂)
+      - [为什么计算hash要无符号右移16位](#为什么计算hash要无符号右移16位)
+      - [为什么计算hash是异或](#为什么计算hash是异或)
+    - [查找](#查找)
+    - [扩容](#扩容)
+    - [jdk1.7多线程扩容死循环问题](#jdk1.7多线程扩容死循环问题)
+    - [jdk1.8的扩容](#jdk1.8的扩容)
+    - [JDK1.8hashmap 依然不安全的原因](#JDK1.8hashmap-依然不安全的原因)
+    - [为什么要使用红黑树而不是AVL](#为什么要使用红黑树而不是AVL)
+    - [为什么不是B+树](#为什么不是B+树)
+    - [为什么不使用跳表](#为什么不使用跳表)
+    - [如果HashMap里有100万条数据，remove掉90万条，HashMap的数组会不会变小](#如果HashMap里有100万条数据，remove掉90万条，HashMap的数组会不会变小)
+- [LinkedHashMap](#LinkedHashMap)
+  - [复杂度](#复杂度-1)
+- [TreeMap](#TreeMap)
+  - [复杂度](#复杂度-2)
+- [ConcurrentHashMap](#ConcurrentHashMap)
+  - [ConcurrentHashMap扩容机制](#ConcurrentHashMap扩容机制)
+    - [1、ConcurrentHashMap 在 JDK 1.7 中的实现](#1、ConcurrentHashMap-在-JDK-17-中的实现)
+    - [2、ConcurrentHashMap 在 JDK 1.8 中的实现](#2、ConcurrentHashMap-在-JDK-18-中的实现)
+- [HashTable](#HashTable)
+- [IdentityHashMap](#IdentityHashMap)
+- [WeakHashMap](#WeakHashMap)
+
 ## HashMap
 - 存储的结构是key-value键值对，不像Collection是单列集合
 - 阅读Map前最好知道什么是散列表和红黑树
@@ -16,8 +49,8 @@
   - ![](../../img/hashmap/HashMap链表结构.png)
 
 
-## 结构
-### Node[] table，即哈希桶数组
+### 结构
+#### Node[] table，即哈希桶数组
 ```java
 static class Node<K,V> implements Map.Entry<K,V> {
         final int hash;
@@ -33,8 +66,8 @@ static class Node<K,V> implements Map.Entry<K,V> {
         }
     }
 ```
-### 插入
-#### 插入流程
+#### 插入
+##### 插入流程
 - ①.判断键值对数组table[i]是否为空或为null，否则执行resize()进行扩容； 
 - ②.根据键值key计算hash值得到插入的数组索引i，如果table[i]==null，直接新建节点添加，转向⑥，如果table[i]不为空，转向③； 
 - ③.判断table[i]的首个元素是否和key一样，如果相同直接覆盖value，否则转向④，这里的相同指的是hashCode以及equals； 
@@ -44,7 +77,7 @@ static class Node<K,V> implements Map.Entry<K,V> {
 
 ![](../../img/hashmap/HashMap插入流程.png)
 
-#### 插入代码
+##### 插入代码
 ```java
 
 static final int hash(Object key) {
@@ -113,7 +146,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 }
 ```
 
-#### hash冲突使用链地址法
+##### hash冲突使用链地址法
 - 链接地址法的思路是将哈希值相同的元素构成一个同义词的单链表
 - `int threshold; `            // 扩容阈值
   - `threshold`就是在此Load factor和length(数组长度)对应下允许的最大元素数目，超过这个数目就重新resize(扩容)，扩容后的HashMap容量是之前容量的两倍
@@ -122,7 +155,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 - `transient int modCount;`  // 出现线程问题时，负责及时抛异常
 - `transient int size;`     // HashMap中实际存在的Node数量
 - 解决hash冲突的几种方法 https://cloud.tencent.com/developer/article/1672781
-#### HashMap的容量为什么要初始化为2的n次幂
+##### HashMap的容量为什么要初始化为2的n次幂
 ```java
 static final int tableSizeFor(int cap) {
     int n = cap - 1;
@@ -139,7 +172,7 @@ static final int tableSizeFor(int cap) {
 
 可见这个(n - 1) & hash的计算方法有着千丝万缕的关系，符号&是按位与的计算，这是位运算，特别高效，按位与&的计算方法是，只有当对应位置的数据都为1时，运算结果也为1，当HashMap的容量是2的n次幂时，(n-1)的2进制也就是1111111***111这样形式的，这样与添加元素的hash值进行位运算时，能够充分的散列，使得添加的元素均匀分布在HashMap的每个位置上，减少hash碰撞
 
-#### 为什么计算hash要无符号右移16位
+##### 为什么计算hash要无符号右移16位
 - Key的哈希值会与该值的高16位做异或操作，进一步增加随机性，如果只是单纯的返回hashcode，做运算的始终是低16位，而hashmap长度大多数小于2的16次方
 ```java
     static final int hash(Object key) {
@@ -147,7 +180,7 @@ static final int tableSizeFor(int cap) {
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
     }
 ```
-#### 为什么计算hash是异或
+##### 为什么计算hash是异或
 - 按位与运算符（&）
   - 两位同时为“1”，结果才为“1”，否则为0，结果偏向于0
 - 按位或运算符（|）
@@ -155,7 +188,7 @@ static final int tableSizeFor(int cap) {
 - 异或运算符（^）
   - 参加运算的两个对象，如果两个相应位为“异”（值不同），则该位结果为1，否则为0。所以更好的扰动了
 
-### 查找
+#### 查找
 ```java
 public V get(Object key) {
     Node<K,V> e;
@@ -186,7 +219,7 @@ final Node<K,V> getNode(int hash, Object key) {
     return null;
 }
 ```
-### 扩容
+#### 扩容
 ```java
 final Node<K,V>[] resize() {
     Node<K,V>[] oldTab = table;
@@ -273,7 +306,7 @@ final Node<K,V>[] resize() {
     return newTab;
 }
 ```
-### jdk1.7多线程扩容死循环问题
+#### jdk1.7多线程扩容死循环问题
 ```java
 void transfer(Entry[] newTable, boolean rehash) {
    int newCapacity = newTable.length;
@@ -297,14 +330,14 @@ void transfer(Entry[] newTable, boolean rehash) {
    }
 }
 ```
-#### 在单线程情况下，假设A、B、C三个节点处在一个链表上，扩容后依然处在一个链表上，代码执行过程如下：
+##### 在单线程情况下，假设A、B、C三个节点处在一个链表上，扩容后依然处在一个链表上，代码执行过程如下：
 ![](../../img/基础/jdk1.7hashmap单线程扩容流程.png)
 
 需要注意的几点是
 - 单链表在转移的过程中会被反转
 - table是线程共享的，而newTable是不共享的
 - 执行table = newTable后，其他线程就可以看到转移线程转移后的结果了
-#### 多线程下扩容
+##### 多线程下扩容
 其实主要结合这4步，然后结合图示就明白了
 ```java
   Entry<K,V> next = e.next;
@@ -313,7 +346,7 @@ void transfer(Entry[] newTable, boolean rehash) {
   e = next;
 ```
 ![](../../img/基础/jdk1.7hashmap多线程扩容流程.png)
-### jdk1.8的扩容
+#### jdk1.8的扩容
 ```java
 // 低位链表头节点，尾结点
 // 低位链表就是扩容前后，所处的槽（slot）的下标不变
@@ -359,23 +392,23 @@ if (hiTail != null) {
 
 等到链表被分成高位链表和低位链表后，再一次性转移到新的table。这样就完成了单链表在扩容过程中的转移，使用两条链表的好处就是转移前后的链表不会倒置，顺序一致则不会因为多线程扩容而导致死循环
 
-### JDK1.8hashmap 依然不安全的原因
+#### JDK1.8hashmap 依然不安全的原因
 JDK1.8 中，由于多线程对HashMap进行put操作，调用了HashMap#putVal()，具体原因：假设两个线程A、B都在进行put操作，并且hash函数计算出的插入下标是相同的，当线程A执行完第六行代码后由于时间片耗尽导致被挂起，而线程B得到时间片后在该下标处插入了元素，完成了正常的插入，然后线程A获得时间片，由于之前已经进行了hash碰撞的判断，所有此时不会再进行判断，而是直接进行插入，这就导致了线程B插入的数据被线程A覆盖了，从而线程不安全
 
-### 为什么要使用红黑树而不是AVL
+#### 为什么要使用红黑树而不是AVL
 - 1、为什么不直接使用树
   - 大部分情况hashmap的数据量发生hash冲突的概率其实是很小的，此时使用链表是最佳选择
 - 2、为什么是红黑树？
   - AVL树是完全平衡二叉树，在节点插入时、删除时都会调整树结构来平衡，因此会消耗更多的时间
   - 虽然AVL的查找时间由于树高度更低而更快，但是插入和删除花费时间比红黑树更长，在hashmap这种情况下更适用红黑树
-### 为什么不是B+树
+#### 为什么不是B+树
 - b+树的特点是矮胖，这样叶子结点可以存储大量数据，减少磁盘IO，并不是说不可以，但是相对应用场景来讲，用红黑树更加适合
 
-### 为什么不使用跳表
+#### 为什么不使用跳表
 - 跳表的随机性：跳表的层次结构是基于随机的，它并不能像红黑树那样提供严格的平衡性。尽管跳表的时间复杂度也是 O(log n)，但跳表实现依赖随机数生成来构建多级索引，可能会导致性能不如红黑树稳定。
 - 空间开销：跳表需要维护多层索引，会增加额外的空间消耗，特别是在 HashMap 中，每个桶原本只是链表结构，如果改为跳表，整个结构变得更复杂，需要更多的指针和索引，内存开销增加。
 
-### 如果HashMap里有100万条数据，remove掉90万条，HashMap的数组会不会变小
+#### 如果HashMap里有100万条数据，remove掉90万条，HashMap的数组会不会变小
 在Java中，HashMap的数组大小在HashMap创建时确定，并且通常不会自动缩小。因此，当你从HashMap中删除大量条目后，HashMap的数组大小不会减小，但是HashMap的占用内存大小也不会一直增加。
 
 即使从HashMap中删除了90%的条目，HashMap的“capacity”和“load factor”将保持不变。这意味着虽然内存中保留了之前容纳100万条目的数组，但实际上用于存储数据的内存将会减少，因为90%的项已被删除。
