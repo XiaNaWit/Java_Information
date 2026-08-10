@@ -17,7 +17,7 @@ Seata 是一款开源的分布式事务解决方案，致力于提供高性能�
 
 在 Seata 的架构中，一共有三个角色：
 
-![seata架构.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fseata%E6%9E%B6%E6%9E%84.png)
+![seata架构.png](../../img/分布式相关/seata/seata架构.png)
 
 - TC (Transaction Coordinator) - 事务协调者：维护全局和分支事务的状态，驱动全局事务提交或回滚。
 - TM (Transaction Manager) - 事务管理器：定义全局事务的范围，开始全局事务、提交或回滚全局事务。
@@ -27,7 +27,7 @@ Seata 是一款开源的分布式事务解决方案，致力于提供高性能�
 
 在 Seata 中，一个分布式事务的生命周期如下：
 
-![seata生命周期.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fseata%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.png)
+![seata生命周期.png](../../img/分布式相关/seata/seata生命周期.png)
 
 - TM 请求 TC 开启一个全局事务。TC 会生成一个 XID 作为该全局事务的编号。
     - XID，会在微服务的调用链路中传播，保证将多个微服务的子事务关联在一起。
@@ -67,11 +67,11 @@ tx1 先开始，开启本地事务，拿到本地锁，更新操作 m = 1000 - 1
 tx2 后开始，开启本地事务，拿到本地锁，更新操作 m = 900 - 100 = 800。本地事务提交前，尝试拿该记录的 全局锁 ，tx1 全局提交前，该记录的全局锁被
 tx1 持有，tx2 需要重试等待 全局锁 。
 
-![at模式事物举例1.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fat%E6%A8%A1%E5%BC%8F%E4%BA%8B%E7%89%A9%E4%B8%BE%E4%BE%8B1.png)
+![at模式事物举例1.png](../../img/分布式相关/seata/at模式事物举例1.png)
 
 tx1 二阶段全局提交，释放 全局锁 。tx2 拿到 全局锁 提交本地事务。
 
-![at模式事物举例2.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fat%E6%A8%A1%E5%BC%8F%E4%BA%8B%E7%89%A9%E4%B8%BE%E4%BE%8B2.png)
+![at模式事物举例2.png](../../img/分布式相关/seata/at模式事物举例2.png)
 
 如果 tx1 的二阶段全局回滚，则 tx1 需要重新获取该数据的本地锁，进行反向补偿的更新操作，实现分支的回滚。
 
@@ -87,7 +87,7 @@ Uncommitted） 。
 
 如果应用在特定场景下，必需要求全局的 读已提交 ，目前 Seata 的方式是通过 SELECT FOR UPDATE 语句的代理。
 
-![at模式事物举例3.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fat%E6%A8%A1%E5%BC%8F%E4%BA%8B%E7%89%A9%E4%B8%BE%E4%BE%8B3.png)
+![at模式事物举例3.png](../../img/分布式相关/seata/at模式事物举例3.png)
 
 SELECT FOR UPDATE 语句的执行会申请 全局锁 ，如果 全局锁 被其他事务持有，则释放本地锁（回滚 SELECT FOR UPDATE
 语句的本地执行）并重试。这个过程中，查询是被 block 住的，直到 全局锁 拿到，即读取的相关数据是 已提交 的，才返回。
@@ -237,7 +237,7 @@ where name = 'TXC';
 - 异步任务阶段的分支提交请求将异步和批量地删除相应 UNDO LOG 记录。
 
 ## TCC 模式
-![tcc.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Ftcc.png)
+![tcc.png](../../img/分布式相关/seata/tcc.png)
 
 TCC（Try-Confirm-Cancel） 实际上是服务化的两阶段提交协议，业务开发者需要实现这三个服务接口，第一阶段服务由业务代码编排来调用 Try 接口进行资源预留，所有参与者的 Try 接口都成功了，事务管理器会提交事务，并调用每个参与者的 Confirm 接口真正提交业务操作，否则调用每个参与者的 Cancel 接口回滚事务。
 
@@ -245,7 +245,7 @@ TCC（Try-Confirm-Cancel） 实际上是服务化的两阶段提交协议，业�
 
 Saga模式是SEATA提供的长事务解决方案，在Saga模式中，业务流程中每个参与者都提交本地事务，当出现某一个参与者失败则补偿前面已经成功的参与者，一阶段正向服务和二阶段补偿服务都由业务开发实现。
 
-![saga.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fsaga.png)
+![saga.png](../../img/分布式相关/seata/saga.png)
 
 理论基础：Hector & Kenneth 发表论⽂ Sagas （1987）
 
@@ -268,7 +268,7 @@ Saga模式是SEATA提供的长事务解决方案，在Saga模式中，业务流�
 ### 整体机制
 在 Seata 定义的分布式事务框架内，利用事务资源（数据库、消息服务等）对 XA 协议的支持，以 XA 协议的机制来管理分支事务的一种 事务模式。
 
-![xa.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fxa.png)
+![xa.png](../../img/分布式相关/seata/xa.png)
 
 执行阶段：
 
@@ -284,7 +284,7 @@ Saga模式是SEATA提供的长事务解决方案，在Saga模式中，业务流�
 #### 1. 整体运行机制
    XA 模式 运行在 Seata 定义的事务框架内：
 
-![xa工作机制.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fxa%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6.png)
+![xa工作机制.png](../../img/分布式相关/seata/xa工作机制.png)
 
 执行阶段（E xecute）：
   - XA start/XA end/XA prepare + SQL + 注册分支
@@ -311,7 +311,7 @@ XA 模式需要 XAConnection。
 
 类比 AT 模式的数据源代理机制，如下：
 
-![xa数据源代理.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fxa%E6%95%B0%E6%8D%AE%E6%BA%90%E4%BB%A3%E7%90%86.png)
+![xa数据源代理.png](../../img/分布式相关/seata/xa数据源代理.png)
 
 但是，第二种方法有局限：无法保证兼容的正确性。
 
@@ -323,7 +323,7 @@ XA 模式需要 XAConnection。
 
 类比 AT 模式的数据源代理机制，如下：
 
-![xa数据源代理2.png](..%2Fimg%2F%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3%2Fseata%2Fxa%E6%95%B0%E6%8D%AE%E6%BA%90%E4%BB%A3%E7%90%862.png)
+![xa数据源代理2.png](../../img/分布式相关/seata/xa数据源代理2.png)
 
 #### 3. 分支注册
    XA start 需要 Xid 参数。
