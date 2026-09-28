@@ -13,6 +13,17 @@
 - [批处理](#批处理)
 - [连接池](#连接池)
 - [常见问题](#常见问题)
+- [高频深挖面试题](#高频深挖面试题)
+  - [1. PreparedStatement 防注入，靠的真是「预编译」吗？](#1-preparedstatement-防注入靠的真是预编译吗)
+  - [2. 为什么 JDBC 4.0 之后可以不写 `Class.forName`？](#2-为什么-jdbc-40-之后可以不写-classforname)
+  - [3. 连接池的 `close()` 为什么不会真的关连接？](#3-连接池的-close-为什么不会真的关连接)
+  - [4. `maxLifetime` 为什么必须小于数据库的 `wait_timeout`？](#4-maxlifetime-为什么必须小于数据库的-wait_timeout)
+  - [5. MySQL 的批处理为什么开了却没效果？](#5-mysql-的批处理为什么开了却没效果)
+  - [6. 归还连接前为什么要恢复 `autoCommit`？](#6-归还连接前为什么要恢复-autocommit)
+  - [7. 为什么说 JDBC 的异常设计不合理？](#7-为什么说-jdbc-的异常设计不合理)
+  - [8. MyBatis 到底在 JDBC 之上做了什么？](#8-mybatis-到底在-jdbc-之上做了什么)
+  - [9. `SELECT *` 到底慢在哪？](#9-select--到底慢在哪)
+  - [10. 如果让你设计一个连接池，关键难点在哪？](#10-如果让你设计一个连接池关键难点在哪)
 
 ## 什么是 JDBC
 
@@ -353,6 +364,338 @@ Connection conn = dataSource.getConnection();   // 从池中借出
 - 事务、连接池管理都要自己实现
 
 这些正是 MyBatis 等持久化框架要解决的问题，参见 [MyBatis](../../中间件/Mybatis/mybatis.md)。
+
+## 高频深挖面试题
+
+
+### 1. PreparedStatement 防注入，靠的真是「预编译」吗？
+
+**问**：PreparedStatement 为什么能防止 SQL 注入？
+
+**答**：因为它预编译了，参数不会参与 SQL 语法解析。
+
+**追问**：那你告诉我，MySQL 默认情况下到底有没有做服务端预编译？
+
+**深答**：这里有个普遍的误解。MySQL Connector/J 的 `useServerPrepStmts` **默认是 false**，也就是说默认情况下**服务端根本没做预编译**——驱动是在客户端把参数转义后拼进 SQL 发过去的。
+
+所以严格来说：
+
+| 场景 | 防注入靠什么 |
+|:---|:---|
+| `useServerPrepStmts=false`（默认） | 靠**客户端的转义**，不是预编译 |
+| `useServerPrepStmts=true` | 靠**服务端预编译**（参数与结构分离） |
+
+**但两种情况下都是安全的**，只是机制不同：默认模式下驱动会严格转义 `'`、`\` 等字符；开启服务端预编译后，参数走独立的协议通道，压根不进入 SQL 文本。
+
+**真正要记住的是**：`Statement` 的问题不在于「没预编译」，而在于**它根本没有参数的概念**——靠字符串拼接，转义责任落在开发者身上，一句手写的拼接就漏了。
+
+---
+
+### 2. 为什么 JDBC 4.0 之后可以不写 `Class.forName`？
+
+**问**：加载驱动为什么要写 `Class.forName("com.mysql.cj.jdbc.Driver")`？现在不写为什么也能跑？
+
+**答**：因为 `Class.forName` 会触发类初始化，执行驱动静态块里的 `DriverManager.registerDriver()`。
+
+**追问**：那 `ClassLoader.loadClass` 行不行？两者区别是什么？
+
+**深答**：**不行**。区别就在「是否初始化」：
+
+```java
+Class.forName(name, true, loader);   // 会初始化 → 执行 static 块 → 注册成功
+ClassLoader.loadClass(name);         // 只加载，不初始化 → static 块不执行 → 注册失败
+```
+
+`Class.forName(String)` 内部等价于第二个参数传 `true`，所以能注册。
+
+**再追问**：那 JDBC 4.0 之后不写为什么也行？
+
+**深答**：靠 **SPI 机制**。驱动 jar 包里有 `META-INF/services/java.sql.Driver` 文件，内容是实现类的全限定名。`ServiceLoader` 会扫描这个文件，用**反射**实例化驱动，自动完成注册。
+
+**继续追问**：这里其实藏着双亲委派被破坏的问题，你能说说吗？
+
+**深答**：能。`DriverManager` 在 `java.sql` 包下，由**启动类加载器**加载；而驱动在应用 classpath 下，需要**应用类加载器**加载。
+
+按双亲委派，父加载器看不到子加载器的类，`DriverManager` 理应找不到驱动。JDBC 通过**线程上下文类加载器**（`Thread.currentThread().getContextClassLoader()`）拿到了应用类加载器，从而加载到驱动——这就是著名的「破坏双亲委派」案例。
+
+---
+
+### 3. 连接池的 `close()` 为什么不会真的关连接？
+
+**问**：连接池里 `conn.close()` 后连接为什么不关闭？
+
+**答**：因为连接池返回的不是原生 `Connection`，而是**代理对象**，`close()` 被重写成了「归还到池中」。
+
+**追问**：具体怎么实现的？如果是你，怎么让用户调用 `close()` 时插进自己的逻辑？
+
+**深答**：用**动态代理**（JDK `Proxy` 或 CGLIB）包装原生连接，拦截 `close()` 等关键方法：
+
+```java
+public class PooledConnection implements InvocationHandler {
+    private final Connection realConn;
+    private final ConnectionPool pool;
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if ("close".equals(method.getName())) {
+            pool.release(realConn);   // 归还，而非关闭
+            return null;
+        }
+        return method.invoke(realConn, args);   // 其他方法直接转发
+    }
+}
+```
+
+HikariCP 的 `ProxyConnection` 就是这个思路。注意它还会拦截 `isClosed()`、`getAutoCommit()` 等做状态修正——因为用户看到的语义应该是「池化的连接」语义，而不是物理连接语义。
+
+**再追问**：那有个坑——用户如果调用了 `close()` 又继续用这个对象呢？
+
+**深答**：代理对象内部会维护一个 `closed` 标志位。归还后再调用任何方法就抛 `SQLException`，防止「已归还的连接被继续使用」这种隐蔽 bug。这也是为什么不建议手动持有 `Connection` 引用。
+
+---
+
+### 4. `maxLifetime` 为什么必须小于数据库的 `wait_timeout`？
+
+**问**：连接池的 `maxLifetime` 参数有什么讲究？
+
+**答**：它控制连接的最大存活时间，超过就销毁重建。
+
+**追问**：那这个值怎么设？设成比数据库的 `wait_timeout` 大行不行？
+
+**深答**：**绝对不行**，这是个线上高频坑。MySQL 的 `wait_timeout` 默认 28800 秒（8 小时），服务端会主动关闭「空闲超时」的连接。
+
+如果 `maxLifetime` 设得比它大（或者压根不设），会出现：
+
+```text
+1. 一条连接长时间空闲，服务端已经悄悄把它关了
+2. 连接池完全不知情，还认为这条连接可用
+3. 应用借出这条「死连接」去执行 SQL
+4. 报错：Communications link failure
+```
+
+**这个 bug 的恶心之处**：它**间歇性复现**，而且往往在低峰期之后流量回升时集中爆发，因为那些空闲连接刚被服务端清掉。排查时看到连接状态正常，实际早已失效。
+
+**正确做法**：`maxLifetime` 设为明显小于 `wait_timeout` 的值（如 1 小时 vs 8 小时），让连接在被数据库关闭**之前**就由池主动回收重建。
+
+**再追问**：那 `maxLifetime` 设太小会怎样？
+
+**深答**：连接频繁重建，失去了池化的意义，增加建连开销。所以是「小于但不是远小于」，一般取 `wait_timeout` 的 1/2 甚至更小，同时要保证大于单次业务的最长执行时间——否则会出现「连接用着用着被池回收了」。
+
+---
+
+### 5. MySQL 的批处理为什么开了却没效果？
+
+**问**：JDBC 批处理为什么快？怎么用？
+
+**答**：用 `addBatch()` + `executeBatch()`，减少网络往返。
+
+**追问**：我在 MySQL 上用了批处理，为什么性能没有提升？
+
+**深答**：因为 **MySQL 驱动默认会把批处理拆成单条 SQL 逐条发送**，`addBatch` 只起到了「攒起来」的作用，网络往返一次没省。
+
+必须显式开启参数：
+
+```text
+jdbc:mysql://localhost:3306/db?rewriteBatchedStatements=true
+```
+
+开启后驱动会把批量 INSERT 重写成多值形式：
+
+```sql
+-- 批处理前（N 次往返）
+insert into t(name) values('a');
+insert into t(name) values('b');
+
+-- 开启 rewriteBatchedStatements 后（1 次往返）
+insert into t(name) values('a'),('b');
+```
+
+性能差异可以达到**数十倍**，这是 MySQL 上最容易被忽略的优化点之一。
+
+**再追问**：那批处理还有别的坑吗？
+
+**深答**：有。一是 `executeBatch()` 返回的是**受影响行数数组**，不是总行数，需要自己累加；二是批量过大可能触发 `max_allowed_packet` 限制，需要分批（如每 1000 条执行一次）；三是如果某条失败，已执行的部分不会自动回滚，需要放在手动事务里配合处理。
+
+---
+
+### 6. 归还连接前为什么要恢复 `autoCommit`？
+
+**问**：用连接池时，手动控制事务要注意什么？
+
+**答**：记得 `setAutoCommit(false)` 开启事务，`commit()` 或 `rollback()` 结束事务。
+
+**追问**：那事务结束后呢？直接归还连接行不行？
+
+**深答**：**不行，必须恢复 `autoCommit(true)`**。原因是连接会被**复用**：
+
+```java
+conn.setAutoCommit(false);   // 开启事务
+try {
+    // 业务逻辑
+    conn.commit();
+} finally {
+    conn.setAutoCommit(true);  // 关键点：归还前恢复
+}
+```
+
+如果忘了恢复，下个使用者从池里拿到这条连接时，它的 `autoCommit` 还是 `false`。那么他执行的 SQL **不会自动提交**，会一直挂在事务里不生效——现象是「SQL 执行了但数据没变化」，或者「代码跑完了但没落库」。
+
+**这个问题的隐蔽性在于**：它会不会出问题取决于「拿到的是哪条连接」。同一个业务，复用到了「干净」的连接就正常，复用到了「脏」连接就出错，表现为**偶发**、**莫名其妙的数据丢失**。
+
+**再追问**：那连接池不管这个吗？
+
+**深答**：主流连接池（HikariCP、Druid）在归还时会做**状态重置**，包括 autoCommit、readOnly、隔离级别等，所以通常不会出问题。但这属于「兜底」，不能依赖——自己显式恢复才是最稳妥的，而且在排查问题时能排除这条干扰项。
+
+---
+
+### 7. 为什么说 JDBC 的异常设计不合理？
+
+**问**：你觉得 JDBC 有哪些设计上的缺陷？
+
+**答**：`SQLException` 是检查型异常，到处都要 try-catch，代码很臃肿。
+
+**追问**：除了「检查型异常」这点，还有什么更深的问题？
+
+**深答**：更本质的问题是**异常分类的缺失**。JDBC 只抛一个 `SQLException`，但不同异常的处理策略完全不同：
+
+| 异常性质 | 例子 | 正确处理 |
+|:---|:---|:---|
+| **瞬态**（可重试） | 死锁、连接超时、锁等待超时 | 重试可能成功 |
+| **非瞬态**（重试无用） | SQL 语法错误、表不存在、字段超长 | 重试只会浪费资源 |
+
+`SQLException` 只提供 `getErrorCode()`（厂商错误码）和 `getSQLState()`（标准状态码），要区分这两类，你得**自己解析错误码**。而不同数据库的错误码还不一样——MySQL 死锁是 1213，Oracle 是 60，代码里就得写一堆 `if`。
+
+**追问**：那怎么解决这个问题？
+
+**深答**：Spring 的 `DataAccessException` 体系就是答案。它把异常重新分类：
+
+```text
+DataAccessException
+├── TransientDataAccessException      ← 瞬态，可重试
+│   ├── DeadlockLoserDataAccessException
+│   ├── QueryTimeoutException
+│   └── ConcurrencyFailureException
+└── NonTransientDataAccessException   ← 非瞬态，重试无用
+    ├── BadSqlGrammarException
+    ├── DataIntegrityViolationException
+    └── ...
+```
+
+它通过 `SQLExceptionTranslator` 把各数据库的错误码统一翻译成这套分类。这样业务代码只需要 `catch (TransientDataAccessException e) { 重试 }`，就实现了**与数据库无关的重试逻辑**——这才是解决异常设计缺陷的正道。
+
+---
+
+### 8. MyBatis 到底在 JDBC 之上做了什么？
+
+**问**：MyBatis 和 JDBC 是什么关系？
+
+**答**：MyBatis 是对 JDBC 的封装，底层还是 JDBC。
+
+**追问**：那它具体封装了哪些东西？如果让你手写一个简化版 MyBatis，你要解决哪几件事？
+
+**深答**：本质上要解决四件事，每一件都对应 JDBC 的一个痛点：
+
+| 要解决的问题 | JDBC 的做法 | MyBatis 的做法 |
+|:---|:---|:---|
+| **连接从哪来** | 手动 `getConnection` + `close` | 交给 `DataSource` / 事务管理器 |
+| **参数怎么绑** | 手动 `setXxx(index, value)` | 反射读对象字段，自动绑定 |
+| **结果怎么映射** | 手动 `while(rs.next())` + 逐字段 set | 反射 + `ResultMap` 自动映射 |
+| **SQL 放哪** | 硬编码在 Java 里 | 抽离到 XML / 注解 |
+
+**追问**：这里面技术上最难的是哪个？
+
+**深答**：**参数绑定和结果映射**，因为要用到反射。
+
+参数绑定的关键在 `ParamNameResolver`——它要解析方法参数名（默认情况下 Java 反射拿不到参数名，需要 `-parameters` 编译参数或 `@Param` 注解），把参数组织成一个 `Map`，再按 `#{name}` 里的名字取值。
+
+结果映射更复杂，要处理：字段名与列名不一致（下划线转驼峰）、嵌套对象、集合类型、类型转换器（`TypeHandler`）。这也是为什么 MyBatis 有 `ResultMap` 这个看起来很繁琐的机制——它是在用配置的复杂度换取映射的灵活性。
+
+**再追问**：那 MyBatis 的核心执行流程呢？
+
+**深答**：`SqlSession` → `Executor` → `StatementHandler` → `ParameterHandler` / `ResultSetHandler`。
+
+其中 `Executor` 负责缓存和事务，`StatementHandler` 负责创建 `PreparedStatement` 并执行。所以最终**一定**会走到 JDBC 的 `PreparedStatement.execute()`——这一点是绕不开的。
+
+---
+
+### 9. `SELECT *` 到底慢在哪？
+
+**问**：为什么开发规范都禁止 `SELECT *`？
+
+**答**：会查出不必要的数据，浪费带宽。
+
+**追问**：如果这张表字段都挺小的，就多查了几个 int，影响大吗？
+
+**深答**：影响**很大**，但原因不是带宽——真正的问题在**索引**。
+
+假设有这样一个联合索引 `idx_abc(a, b, c)`，执行：
+
+```sql
+-- 可以走覆盖索引，不回表
+SELECT a, b, c FROM t WHERE a = 1;
+
+-- 必须回表，因为要返回所有字段
+SELECT * FROM t WHERE a = 1;
+```
+
+覆盖索引意味着**只需要扫描索引就能拿到全部数据**，无需回表。回表则是「先在索引里找到主键，再拿主键去主键索引里取整行」——每行一次随机 IO。
+
+数据量一大，覆盖索引和回表的差距可以是**数量级**的。
+
+**追问**：还有别的影响吗？
+
+**深答**：还有三个：
+
+- **大字段拖累**：如果表里有 `TEXT`/`BLOB`，即使这些字段没用到也会被读出，网络和内存开销剧增。
+- **影响索引选择**：`ORDER BY` 场景下，优化器可能因为要返回所有字段而放弃使用覆盖索引。
+- **变更风险**：表新增字段后，`SELECT *` 的结果集结构会变化，可能导致映射报错或行为异常。
+
+**一句话总结**：`SELECT *` 最大的代价是**失去了使用覆盖索引的机会**，而覆盖索引恰恰是 MySQL 最重要的优化手段之一。
+
+---
+
+### 10. 如果让你设计一个连接池，关键难点在哪？
+
+**问**：让你实现一个简易连接池，你会怎么设计？
+
+**答**：用阻塞队列存连接，`getConnection` 时 `take()`，归还时 `offer()` 回去。
+
+**追问**：那用户调用 `close()` 的时候，怎么让它「归还」而不是真关闭？
+
+**深答**：这是**最关键的一点**——必须用**动态代理**包装 `Connection`，拦截 `close()` 改成归还：
+
+```java
+if ("close".equals(method.getName())) {
+    pool.release(realConn);
+    return null;
+}
+```
+
+如果直接返回原生 `Connection`，用户一调 `close()` 物理连接就断了，池化就没意义了。
+
+**再追问**：还有哪些难点？
+
+**深答**：主要有四个：
+
+| 难点 | 问题 | 解决思路 |
+|:---|:---|:---|
+| **连接有效性** | 池里的连接可能已被服务端关闭 | 借出前 `isValid()` 校验，或用 `maxLifetime` 强制淘汰 |
+| **并发安全** | 多线程同时借还 | 用 `BlockingQueue` / `Semaphore` 保证原子性 |
+| **超时控制** | 池耗尽时不能让请求无限等待 | `poll(timeout)` 超时抛异常，避免线程堆积 |
+| **泄漏检测** | 用户借了不还 | 记录借出时间与堆栈，超时未归还时告警或强制回收 |
+
+**继续追问**：池大小怎么定？越大越好吗？
+
+**深答**：**不是**，这是最常见的误区。连接数过大会导致：
+
+- 数据库端每个连接都占用内存和线程，反而拖垮数据库。
+- 应用侧线程上下文切换和锁竞争加剧。
+
+经验公式是 `连接数 ≈ CPU核数 × 2 + 磁盘数`，但真正靠谱的做法是**压测**——从较小值开始逐步加压，观察 QPS 和 RT，找到拐点。HikariCP 作者的观点是：**连接数的瓶颈往往在磁盘 IO 和数据库本身，而不是 CPU**，所以盲目加连接通常没有收益。
+
+**最后一问**：那 HikariCP 为什么比别的池快？
+
+**深答**：几个关键点：一是用了自定义的 `FastList` 替代 `ArrayList` 做连接容器（省去了范围检查）；二是用 `ConcurrentBag` 做连接池容器，它是**无锁**的（基于 `ThreadLocal` + 原子操作），在高并发下避免了锁竞争；三是字节码精简，减少不必要的抽象层。核心思想就是**减少锁竞争和对象分配**。
 
 ## 参考文章
 
