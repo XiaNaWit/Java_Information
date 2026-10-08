@@ -2,6 +2,7 @@
 * [springMVC](#springmvc)
    * [流程](#流程)
    * [执行流程](#执行流程)
+   * [相关](#相关)
 
 
 # springMVC
@@ -32,3 +33,7 @@
 10. **DispatcherServlet对View进行渲染视图（即将模型数据model填充至视图中）**
     1. View:是springmvc的封装对象，是一个接口, springmvc框架提供了很多的View视图类型，包括：jspview，pdfview,jstlView、freemarkerView、pdfView等。一般情况下需要通过页面标签或页面模版技术将模型数据通过页面展示给用户，需要由程序员根据业务需求开发具体的页面。
 11. **DispatcherServlet响应用户**
+
+## 相关
+
+- [拦截器与过滤器的区别](Spring拦截器与过滤器.md)

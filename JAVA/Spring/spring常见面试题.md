@@ -429,6 +429,21 @@ Spring的处理程序映射机制包括处理程序拦截器，当你希望将�
 - postHandle：在执行完实际程序之后调用。
 - afterCompletion：在完成请求后调用。
 
+**拦截器与过滤器的区别（简答）**：
+
+| 对比维度 | Filter（过滤器） | Interceptor（拦截器） |
+|:---|:---|:---|
+| 规范归属 | Servlet 规范 | Spring MVC 框架 |
+| 触发时机 | DispatcherServlet **之前** | DispatcherServlet **内部**、Handler 前后 |
+| 能否注入 Bean | 默认不能 | ✅ 可以 |
+| 能否拿到目标方法 | ❌ | ✅ 可通过 `HandlerMethod` |
+| 中断方式 | 不调用 `chain.doFilter()` | `preHandle` 返回 false |
+| 典型用途 | 编码、跨域、请求日志 | 登录校验、权限、日志 |
+
+**一句话记忆**：Filter 是**容器级**的、在 Spring 之外；Interceptor 是**框架级**的、在 Spring 之内，且能拿到即将执行的 Controller 方法。
+
+> 完整对比（含执行链路图、代码示例、执行顺序、高频追问）见 [拦截器与过滤器](Spring拦截器与过滤器.md)。
+
 ## 34. Spring MVC 和 Struts2 的异同？
 
 **入口** 不同

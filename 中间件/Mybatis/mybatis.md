@@ -26,6 +26,13 @@
         * [7. 乐观锁](#7-乐观锁)
     * [常用注解](#常用注解)
     * [使用注意事项](#使用注意事项)
+    * [MyBatis 插件机制](#mybatis-插件机制)
+        * [1. 可拦截的四个切入点](#1-可拦截的四个切入点)
+        * [2. 原生 MyBatis 插件写法](#2-原生-mybatis-插件写法)
+        * [3. MyBatis-Plus 的 InnerInterceptor](#3-mybatis-plus-的-innerinterceptor)
+        * [4. MyBatis-Plus 内置插件](#4-mybatis-plus-内置插件)
+        * [5. 插件的工作原理](#5-插件的工作原理)
+        * [6. 常见问题](#6-常见问题)
 
 # mybatis
 
@@ -707,6 +714,195 @@ productMapper.updateById(product);
 - **乐观锁必须传入查询出的对象**，若前端直接传参构造对象导致 version 丢失，乐观锁会失效。
 - **自动填充需实现 `MetaObjectHandler` 并注入 Spring 容器**，只加注解不会生效。
 - **生产环境关闭 SQL 日志**，`log-impl: StdOutImpl` 会打印全部 SQL，影响性能。
+
+## MyBatis 插件机制
+
+MyBatis 的插件（也叫**拦截器**）是基于**责任链 + 动态代理**的扩展机制，可以在 SQL 执行的关键节点插入自定义逻辑。
+
+> ⚠️ **概念区分**：这里的「拦截器」和 Spring MVC 的 `HandlerInterceptor` 是**完全不同的东西**——
+> **MVC 拦截器**拦的是 HTTP 请求，**MyBatis 插件**拦的是 SQL 执行。
+> 详见 [三种「拦截器」的澄清](../../JAVA/Spring/Spring拦截器与过滤器.md#七概念澄清三种拦截器)。
+
+### 1. 可拦截的四个切入点
+
+MyBatis 只开放了 4 个可拦截的接口方法：
+
+| 可拦截的类 | 方法 | 拦截时机 | 典型用途 |
+|:---|:---|:---|:---|
+| `Executor` | `update` / `query` | 执行 SQL 前 | 分页、缓存 |
+| `StatementHandler` | `prepare` | 创建 PreparedStatement 前 | **SQL 改写**（多租户、数据权限） |
+| `ParameterHandler` | `setParameters` | 参数设置时 | 参数加解密 |
+| `ResultSetHandler` | `handleResultSets` | 结果集处理时 | 字段脱敏、结果解密 |
+
+**最常用的是 `Executor` 和 `StatementHandler`**——前者适合做拦截控制，后者能拿到最终 SQL，适合做 SQL 改写。
+
+### 2. 原生 MyBatis 插件写法
+
+```java
+@Intercepts({
+    @Signature(
+        type = StatementHandler.class,
+        method = "prepare",
+        args = {Connection.class, Integer.class}
+    )
+})
+public class SqlLogInterceptor implements Interceptor {
+
+    @Override
+    public Object intercept(Invocation invocation) throws Throwable {
+        StatementHandler handler = (StatementHandler) invocation.getTarget();
+        // 拿到最终要执行的 SQL
+        String sql = handler.getBoundSql().getSql();
+        log.info("执行 SQL: {}", sql);
+
+        long start = System.currentTimeMillis();
+        Object result = invocation.proceed();     // 放行
+        log.info("耗时: {}ms", System.currentTimeMillis() - start);
+        return result;
+    }
+
+    @Override
+    public Object plugin(Object target) {
+        // 用动态代理包装目标对象
+        return Plugin.wrap(target, this);
+    }
+
+    @Override
+    public void setProperties(Properties properties) {
+        // 读取配置参数
+    }
+}
+```
+
+**注册方式**（原生 MyBatis）：
+
+```java
+@Bean
+public ConfigurationCustomizer configurationCustomizer() {
+    return configuration -> configuration.addInterceptor(new SqlLogInterceptor());
+}
+```
+
+### 3. MyBatis-Plus 的 `InnerInterceptor`
+
+MyBatis-Plus 在原生插件之上做了一层封装，提供了 `InnerInterceptor` 接口，**开发自定义插件更简单**——不需要写 `@Intercepts` 注解，也不用处理 `Plugin.wrap`。
+
+**注册方式**：所有插件都挂到**一个** `MybatisPlusInterceptor` Bean 上。
+
+```java
+@Bean
+public MybatisPlusInterceptor mybatisPlusInterceptor() {
+    MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+
+    if ("SCHEMA".equalsIgnoreCase(tenantMode)) {
+        // schema 隔离模式下，添加表名 schema 拦截器
+        try {
+            SchemaTableNameInnerInterceptor schemaInterceptor =
+                    SpringUtils.getBean(SchemaTableNameInnerInterceptor.class);
+            interceptor.addInnerInterceptor(schemaInterceptor);
+            log.debug("Schema隔离模式已启用，添加表名schema拦截器");
+        } catch (BeansException ignore) {
+            // 如果没有配置 SchemaTableNameInnerInterceptor Bean，忽略
+        }
+    }
+    // 数据权限处理
+    //interceptor.addInnerInterceptor(dataPermissionInterceptor());
+    // delete_flag 自动添加
+    interceptor.addInnerInterceptor(delFlagInnerInterceptor);
+    // 分页插件
+    interceptor.addInnerInterceptor(paginationInnerInterceptor());
+    // 乐观锁插件
+    interceptor.addInnerInterceptor(optimisticLockerInnerInterceptor());
+
+    return interceptor;
+}
+```
+
+**这段代码值得学习的几个设计点**：
+
+| 设计点 | 说明 |
+|:---|:---|
+| **插件只有一个 Bean** | 不同于 MVC 拦截器可以注册多个，MP 的所有插件都挂到同一个 `MybatisPlusInterceptor` 上 |
+| **条件化注册** | 通过 `tenantMode` 配置决定是否启用 schema 隔离插件，**避免无用插件的性能损耗** |
+| **`SpringUtils.getBean` + try-catch** | 插件的注册时机可能早于目标 Bean 初始化，用 `getBean` 延迟获取；加 `try-catch` 容错，未配置时不影响启动 |
+| **注释保留** | 留注释的 `dataPermissionInterceptor`，说明可能按需启用——**便于后续排查和恢复配置** |
+
+### 4. MyBatis-Plus 内置插件
+
+| 插件类 | 作用 | 说明 |
+|:---|:---|:---|
+| `PaginationInnerInterceptor` | **分页** | 最常用，必须注册，支持多种数据库 |
+| `OptimisticLockerInnerInterceptor` | **乐观锁** | 配合 `@Version` 使用 |
+| `BlockAttackInnerInterceptor` | **防全表更新删除** | 拦截没有 WHERE 的 update/delete |
+| `IllegalSqlInnerInterceptor` | **SQL 性能规范** | 检查索引使用、全表扫描等 |
+| `TenantLineInnerInterceptor` | **多租户** | 自动拼接租户条件 |
+| `DataPermissionInterceptor` | **数据权限** | 按规则拼接权限 SQL |
+| `DynamicTableNameInnerInterceptor` | **动态表名** | 按规则改写表名（如按月分表） |
+
+**注册顺序有讲究**：
+
+```java
+// 多租户 → 动态表名 → 分页 → 乐观锁 → 防全表
+interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(...));
+interceptor.addInnerInterceptor(new DynamicTableNameInnerInterceptor(...));
+interceptor.addInnerInterceptor(new PaginationInnerInterceptor(...));
+interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
+```
+
+> ⚠️ **官方建议的注册顺序**：多租户 → 动态表名 → 分页 → 乐观锁 → 防全表更新删除。
+> **分页插件要放在最后几个位置**——如果放在多租户之前，可能导致租户条件拼接位置不对；且分页插件应该**在 SQL 被改写之后**再执行，否则统计的总数会不准确。
+
+### 5. 插件的工作原理
+
+MyBatis 插件的本质是**动态代理**：
+
+```text
+① 解析 @Intercepts 注解，得知要拦截哪个类的哪个方法
+        ↓
+② 创建该类实例时，用 Plugin.wrap() 生成代理对象
+        ↓
+③ 执行目标方法时，被代理拦截，进入 intercept() 方法
+        ↓
+④ 在 intercept() 中可改写 SQL、修改参数、处理结果，再 proceed() 放行
+```
+
+**多插件如何串联？** 多个插件会形成**代理链**（责任链模式）：
+
+```text
+Executor 代理1 → Executor 代理2 → Executor 真实对象
+```
+
+执行时会**按注册顺序依次进入**，`proceed()` 后**逆序返回**——与 Spring MVC 多拦截器的顺序规律一致。
+
+### 6. 常见问题
+
+**1. MyBatis 插件和 Spring MVC 拦截器有什么区别？**
+
+| 对比项 | MyBatis 插件 | Spring MVC 拦截器 |
+|:---|:---|:---|
+| 拦截对象 | **SQL 执行** | **HTTP 请求** |
+| 核心接口 | `Interceptor` / `InnerInterceptor` | `HandlerInterceptor` |
+| 注册位置 | `MybatisPlusInterceptor` Bean | `WebMvcConfigurer#addInterceptors` |
+| 能否改写 SQL | ✅ 可以 | ❌ 不行 |
+| 典型用途 | 分页、多租户、数据权限 | 登录校验、权限 |
+
+**2. 分页插件为什么必须注册？**
+
+不注册时 `selectPage` **不会真正分页**，而是查出全部数据后在内存中截取（内存分页）——数据量大时会 OOM。
+
+**3. 为什么自定义插件里能拿到 SQL？**
+
+因为拦截的是 `StatementHandler#prepare`——此时 SQL 语句已经由 `MappedStatement` 拼接完成，是**即将发送给数据库的最终 SQL**。
+
+**4. 多个插件的执行顺序？**
+
+按**注册顺序**依次拦截，`proceed()` 后**逆序返回**。所以有依赖关系的插件要注意注册顺序（如分页应在租户、动态表名之后）。
+
+**5. `SpringUtils.getBean` 和 `@Autowired` 有什么区别？**
+
+- `@Autowired`：**容器启动时注入**，如果目标 Bean 尚未创建会报错或依赖循环。
+- `SpringUtils.getBean()`：**运行时按需获取**，适合拦截器、插件这类注册时机不确定的场景，配合 `try-catch` 可实现「有则用、无则忽略」的容错。
+
 
 ## 参考文章
 

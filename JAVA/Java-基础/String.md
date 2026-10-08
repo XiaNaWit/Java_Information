@@ -10,11 +10,20 @@
 - [String 拼接的编译优化](#string-拼接的编译优化)
 - [StringBuilder 与 StringBuffer](#stringbuilder-与-stringbuffer)
 - [String 的 hashCode()](#string-的-hashcode)
+- [常用 API 方法](#常用-api-方法)
+  - [1. 长度与判空](#1-长度与判空)
+  - [2. 查找与判断](#2-查找与判断)
+  - [3. 截取、替换、分割](#3-截取替换分割)
+  - [4. 大小写与空白处理](#4-大小写与空白处理)
+  - [5. 转换与格式化](#5-转换与格式化)
+  - [6. 简单示例（综合）](#6-简单示例综合)
+  - [7. 方法使用要点小结](#7-方法使用要点小结)
 - [面试题](#面试题)
   - [一、不可变性与设计](#一不可变性与设计)
   - [二、常量池与内存](#二常量池与内存)
   - [三、字符串操作与性能](#三字符串操作与性能)
   - [四、编码与字符](#四编码与字符)
+  - [五、常用方法相关](#五常用方法相关)
 
 ## String 的特性
 
@@ -422,6 +431,221 @@ public int hashCode() {
 
 固定大于 1 的乘数可以让**位置信息参与运算**，避免这种冲突。
 
+## 常用 API 方法
+
+String 的方法很多，按用途分类记忆更高效。**核心前提**：String 不可变，所有「修改」类方法都**返回新字符串**，原对象不变。
+
+### 1. 长度与判空
+
+| 方法 | 说明 | 版本 |
+|:---|:---|:---|
+| `length()` | 返回**字符数**（注意不是字节数） | 1.0 |
+| `isEmpty()` | 是否为 `""`（长度 0） | 1.6 |
+| `isBlank()` | 是否为空**或只含空白字符** | **11+** |
+| `charAt(int i)` | 取索引 i 处的字符 | 1.0 |
+| `toCharArray()` | 转为 `char[]` | 1.0 |
+| `codePointCount(begin, end)` | 统计**码点**数量（emoji 等正确计数） | 1.5 |
+
+```java
+String s = "  ";
+s.length();     // 2，有长度
+s.isEmpty();    // false，不是空串
+s.isBlank();    // true，全是空白 → 这才是「业务意义上的空」
+
+String emoji = "😀";
+emoji.length();                                  // 2（代理对占两个 char）
+emoji.codePointCount(0, emoji.length());         // 1（真实字符数）
+```
+
+> ⚠️ **易错点**：判断「用户输入是否为空」应该用 `isBlank()` 而不是 `isEmpty()`——用户输入几个空格，`isEmpty()` 返回 false 但业务上应视为空。`isBlank()` 需要 **Java 11+**。
+
+### 2. 查找与判断
+
+| 方法 | 说明 | 返回 |
+|:---|:---|:---|
+| `indexOf(String/char)` | 首次出现的索引 | 找不到返回 **-1** |
+| `indexOf(s, fromIndex)` | 从指定位置开始找 | -1 |
+| `lastIndexOf(...)` | 最后一次出现的索引 | -1 |
+| `contains(CharSequence)` | 是否包含子串 | boolean |
+| `startsWith(String)` | 是否以某前缀开头 | boolean |
+| `startsWith(String, offset)` | 从指定位置判断前缀 | boolean |
+| `endsWith(String)` | 是否以某后缀结尾 | boolean |
+| `matches(String regex)` | 是否**完全匹配**正则 | boolean |
+| `equals(Object)` | 内容是否相等 | boolean |
+| `equalsIgnoreCase(String)` | 忽略大小写比较 | boolean |
+| `compareTo(String)` | 字典序比较 | 差值（int） |
+| `compareToIgnoreCase(String)` | 忽略大小写字典序比较 | int |
+| `contentEquals(CharSequence)` | 与任意字符序列比内容 | boolean |
+
+```java
+String s = "Hello World";
+
+s.indexOf("o");            // 4（首次出现）
+s.lastIndexOf("o");        // 7（最后出现）
+s.indexOf("z");            // -1（不存在）
+
+// ⚠️ matches 是完全匹配，不是包含！
+"abc123".matches("\\d+");   // false，因为含字母
+"123".matches("\\d+");      // true
+"abc123".matches(".*\\d+.*"); // true，要「包含数字」得这样写
+```
+
+> ⚠️ **两个高频易错点**：
+> 1. `indexOf` 找不到返回 **-1**，不是 0。判断时必须 `!= -1`，写成 `if (s.indexOf("x"))` 会逻辑错误（-1 在 Java 中不为 false）。
+> 2. **`matches()` 是完全匹配**，不是包含匹配。判断「包含」要用 `contains()` 或 `.*xxx.*`。
+
+**`compareTo()` 的返回值含义**：
+
+```java
+"a".compareTo("b");    // 负数（a 在 b 前）
+"b".compareTo("a");    // 正数
+"a".compareTo("a");    // 0
+
+// 常用于排序
+list.sort(String::compareTo);
+```
+
+### 3. 截取、替换、分割
+
+| 方法 | 说明 |
+|:---|:---|
+| `substring(int begin)` | 从 begin 截到末尾 |
+| `substring(int begin, int end)` | 截取 `[begin, end)`（**含头不含尾**） |
+| `replace(char, char)` | 替换**所有**指定字符 |
+| `replace(CharSequence, CharSequence)` | 替换**所有**子串 |
+| `replaceAll(regex, replacement)` | **正则**替换全部 |
+| `replaceFirst(regex, replacement)` | **正则**替换第一个 |
+| `split(String regex)` | 按正则分割 |
+| `split(String regex, int limit)` | 限制分割数量 |
+| `concat(String)` | 拼接（等价于 `+`） |
+| `String.join(delimiter, ...)` | 静态方法，用分隔符拼接 |
+| `repeat(int n)` | 重复 n 次 | **11+** |
+
+```java
+String s = "Hello World";
+
+s.substring(6);         // "World"
+s.substring(0, 5);      // "Hello"，下标 0~4
+
+s.replace('l', 'L');                    // "HeLLo WorLd"
+s.replace("World", "Java");             // "Hello Java"
+s.replaceAll("\\s+", "");               // "HelloWorld"（正则去空白）
+s.replaceFirst("l", "L");               // "HeLlo World"
+
+s.split(" ");                           // ["Hello", "World"]
+"a,b,,c".split(",");                    // ["a", "b", "", "c"]
+"a,b,,c".split(",", 2);                 // ["a", "b,,c"]，限制为 2 段
+
+String.join("-", "a", "b", "c");        // "a-b-c"
+"ab".repeat(3);                         // "ababab"
+```
+
+> ⚠️ **`split` 的坑**：
+> 1. **参数是正则不是普通字符串**。按 `.` 分割必须转义：`split("\\.")`，直接写 `split(".")` 会得到空数组（因为 `.` 匹配任意字符）。
+> 2. **末尾空串会被丢弃**：`"a,b,".split(",")` 返回 `["a", "b"]`（长度为 2，不是 3）。要保留需用 `split(",", -1)`。
+> 3. **`replaceAll` 的替换串中 `$` 和 `\` 有特殊含义**，需转义，否则可能抛异常。
+
+### 4. 大小写与空白处理
+
+| 方法 | 说明 | 版本 |
+|:---|:---|:---|
+| `toUpperCase()` | 转大写 | 1.0 |
+| `toLowerCase()` | 转小写 | 1.0 |
+| `trim()` | 去首尾空白（**仅 ASCII** ≤ U+0020） | 1.0 |
+| `strip()` | 去首尾空白（**Unicode** 感知） | **11+** |
+| `stripLeading()` | 只去头部空白 | **11+** |
+| `stripTrailing()` | 只去尾部空白 | **11+** |
+| `indent(int n)` | 调整缩进 | **12+** |
+
+```java
+// trim() 和 strip() 对 Unicode 空白的行为差异
+String s = "\u2000Hello\u2000";    // \u2000 是 Unicode 空格
+
+s.trim().length();     // 7，trim 不认 \u2000，没去掉
+s.strip().length();    // 5，strip 正确去掉了
+```
+
+> ⚠️ **`trim()` vs `strip()`**：
+> - `trim()` 只处理 `\u0020` 及以下的字符，对全角空格（`\u3000`）、Unicode 空格（`\u2000`）**无效**。
+> - `strip()` 基于 `Character.isWhitespace()`，**能处理所有 Unicode 空白**，是更正确的选择。
+> - 处理**中文用户输入**（可能含全角空格）时，必须用 `strip()`。
+
+### 5. 转换与格式化
+
+| 方法 | 说明 | 版本 |
+|:---|:---|:---|
+| `String.valueOf(...)` | 基本类型/对象转字符串（**推荐，不会 NPE**） | 1.0 |
+| `String.format(fmt, args)` | 格式化字符串 | 1.5 |
+| `formatted(args)` | 实例方法版格式化 | **15+** |
+| `getBytes()` | 转字节数组（用平台默认编码，**不推荐**） | 1.0 |
+| `getBytes(Charset)` | 按指定编码转字节（**推荐**） | 1.6 |
+| `toCharArray()` | 转 `char[]` | 1.0 |
+| `intern()` | 放入字符串常量池并返回池中引用 | 1.0 |
+| `chars()` | 转 `IntStream`（处理字符流） | **8+** |
+| `codePoints()` | 转码点 `IntStream`（emoji 安全） | **8+** |
+| `lines()` | 按行分割为 `Stream<String>` | **11+** |
+| `transform(Function)` | 链式转换（函数式风格） | **12+** |
+
+```java
+// valueOf vs toString
+Object obj = null;
+String.valueOf(obj);     // "null"，安全
+obj.toString();          // ❌ NullPointerException
+
+// 格式化
+String.format("姓名：%s，年龄：%d", "张三", 18);
+"姓名：%s，年龄：%d".formatted("张三", 18);   // Java 15+ 更简洁
+
+// 编码转换必须显式指定字符集
+byte[] bytes = "中文".getBytes(StandardCharsets.UTF_8);   // ✅ 推荐
+// "中文".getBytes();    // ❌ 依赖平台默认编码，跨平台可能乱码
+
+// Stream 处理（Java 8+）
+"Hello".chars().filter(Character::isUpperCase).count();    // 1
+
+// 按行处理（Java 11+）
+"a\nb\nc".lines().forEach(System.out::println);
+
+// transform 链式调用（Java 12+）
+String result = "  hello  "
+        .transform(String::strip)
+        .transform(String::toUpperCase);    // "HELLO"
+```
+
+> **重要提示**：`String.valueOf(obj)` 与 `obj.toString()` 的区别常被问到——前者对 `null` 返回字符串 `"null"` 而不抛异常，后者会 NPE。日志打印对象时应优先用 `String.valueOf()`。
+
+### 6. 简单示例（综合）
+
+```java
+String s = " Hello World ";
+
+s.length();                          // 13
+s.trim();                            // "Hello World"
+s.strip();                           // "Hello World"
+s.contains("World");                 // true
+s.indexOf("World");                  // 7
+s.substring(1, 6);                   // "Hello"
+s.replace("World", "Java");          // " Hello Java "
+s.split(" ");                        // ["", "Hello", "World"]
+String.join("-", "a", "b");          // "a-b"
+String.format("%s-%d", "id", 1);     // "id-1"
+```
+
+### 7. 方法使用要点小结
+
+| 要点 | 说明 |
+|:---|:---|
+| **`==` vs `equals()`** | `==` 比较引用地址，比较内容必须用 `equals()` |
+| **频繁拼接用 Builder** | 循环中不要用 `+`，改用 `StringBuilder` / `StringBuffer` |
+| **判空用 `isBlank()`** | 比 `isEmpty()` 更符合业务语义（Java 11+） |
+| **去空白用 `strip()`** | 比 `trim()` 更通用，能处理 Unicode 空白（Java 11+） |
+| **`matches()` 是完全匹配** | 判断包含用 `contains()` |
+| **`indexOf` 找不到返回 -1** | 必须用 `!= -1` 判断 |
+| **`split` 参数是正则** | 特殊字符需转义，末尾空串会被丢弃 |
+| **编码要显式指定** | `getBytes(StandardCharsets.UTF_8)`，别用无参版本 |
+| **`valueOf` 优于 `toString`** | 对 null 安全，不会 NPE |
+| **所有方法都返回新对象** | String 不可变，调用后原对象不变 |
+
 ## 面试题
 
 ### 一、不可变性与设计
@@ -616,6 +840,148 @@ try {
     Arrays.fill(password, '0');   // 主动清零
 }
 ```
+
+### 五、常用方法相关
+
+**19. `trim()` 和 `strip()` 有什么区别？**
+
+| 对比项 | `trim()` | `strip()` |
+|:---|:---|:---|
+| 版本 | 1.0 | **Java 11+** |
+| 判断依据 | 字符 ≤ `U+0020`（ASCII） | `Character.isWhitespace()`（Unicode） |
+| 全角空格 `\u3000` | ❌ 不去除 | ✅ 去除 |
+| Unicode 空格 `\u2000` | ❌ 不去除 | ✅ 去除 |
+
+```java
+String s = "\u3000abc\u3000";   // 全角空格
+s.trim().equals(s);    // true，trim 没去掉
+s.strip().length();    // 3，strip 正确去除
+```
+
+**处理中文用户输入时应该用 `strip()`**——中文输入法容易打出全角空格。
+
+**20. `isEmpty()` 和 `isBlank()` 有什么区别？**
+
+- `isEmpty()`：长度是否为 0，即 `length() == 0`
+- `isBlank()`：是否为空**或只含空白字符**（Java 11+）
+
+```java
+String s = "   ";
+s.isEmpty();   // false，有三个字符
+s.isBlank();   // true，业务上应视为空
+```
+
+> **实践建议**：校验用户输入非空，应该用 `isBlank()`。用 `isEmpty()` 会放过「只输入空格」的情况。
+
+**21. `indexOf()` 找不到时返回什么？**
+
+返回 **-1**（不是 0 也不是 null）。
+
+```java
+String s = "abc";
+System.out.println(s.indexOf("z"));   // -1
+
+// ❌ 错误写法
+if (s.indexOf("z") != 0) { }   // 逻辑错误！-1 != 0 也是 true
+
+// ✅ 正确写法
+if (s.indexOf("z") != -1) { }
+if (s.contains("z")) { }       // 更清晰
+```
+
+**22. `matches()` 和 `contains()` 有什么区别？**
+
+- `matches(regex)`：**完全匹配**整个字符串
+- `contains(s)`：判断是否**包含**子串
+
+```java
+"abc123".matches("\\d+");         // false，因为前面有字母
+"abc123".contains("123");         // true
+
+// 想用正则做「包含」判断，要自己加 .*
+"abc123".matches(".*\\d+.*");     // true
+```
+
+> 这是很常见的认知错误——很多人以为 `matches` 是「包含」。
+
+**23. `split()` 有什么坑？**
+
+三个坑：
+
+```java
+// 坑 1：参数是正则，特殊字符要转义
+"a.b.c".split(".");        // ❌ 结果为空数组（. 匹配任意字符）
+"a.b.c".split("\\.");      // ✅ ["a", "b", "c"]
+
+// 坑 2：末尾空串会被丢弃
+"a,b,".split(",");         // ["a", "b"]，长度为 2
+"a,b,".split(",", -1);     // ["a", "b", ""]，长度为 3，用 -1 保留空串
+
+// 坑 3：split 性能一般，高频调用可考虑手写或用 StringUtils
+```
+
+**24. `String.valueOf()` 和 `toString()` 有什么区别？**
+
+```java
+Object obj = null;
+
+String.valueOf(obj);    // "null"，安全返回字符串
+obj.toString();         // ❌ NullPointerException
+
+String.valueOf(123);    // "123"，支持基本类型
+```
+
+`String.valueOf()` 内部对 `null` 做了判断，**对 null 安全**。日志打印、字符串拼接场景推荐用它。
+
+**25. `getBytes()` 为什么要指定字符集？**
+
+```java
+byte[] b1 = "中文".getBytes();                              // ❌ 用平台默认编码
+byte[] b2 = "中文".getBytes(StandardCharsets.UTF_8);        // ✅ 明确指定
+```
+
+无参的 `getBytes()` 使用**平台默认字符集**——Windows 中文环境可能是 GBK，Linux 可能是 UTF-8。同一份代码在不同环境得到不同字节，导致**跨平台乱码**。
+
+**必须显式指定字符集**，推荐 `StandardCharsets.UTF_8`。
+
+**26. `length()`、`length`、`size()` 分别用在哪？**
+
+| 写法 | 适用对象 | 说明 |
+|:---|:---|:---|
+| `length`（无括号） | **数组** | `arr.length` |
+| `length()` | **String** | `str.length()` |
+| `size()` | **集合**（List/Set/Map） | `list.size()` |
+
+```java
+int[] arr = {1, 2, 3};
+arr.length;                  // 数组用 length
+
+String s = "abc";
+s.length();                  // String 用 length()
+
+List<String> list = new ArrayList<>();
+list.size();                 // 集合用 size()
+```
+
+> 这是 Java 中被吐槽最多的不一致设计之一，面试常考。
+
+**27. 如何判断一个字符串是否包含 emoji 或统计真实字符数？**
+
+```java
+String emoji = "😀";
+
+emoji.length();                                    // 2，代理对占两个 char
+emoji.codePointCount(0, emoji.length());           // 1，真实字符数
+
+// 判断是否含非 BMP 字符（如 emoji）
+boolean hasEmoji = emoji.codePoints().anyMatch(cp -> cp > 0xFFFF);
+
+// 按真实字符遍历
+emoji.codePoints().forEach(cp -> 
+    System.out.println(new String(Character.toChars(cp))));
+```
+
+> 涉及用户昵称、评论等可能含 emoji 的场景，**不能用 `length()` 判断长度**，否则会把一个 emoji 当两个字符，导致校验和截断出错。
 
 # 参考文章
 - https://mp.weixin.qq.com/s?__biz=MzI2OTQ4OTQ1NQ==&mid=2247483956&idx=1&sn=1c19164967621fa5449a7830d006c8f9&scene=19#wechat_redirect
