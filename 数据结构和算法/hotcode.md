@@ -431,7 +431,7 @@ k 是一个正整数，它的值小于或等于链表的长度。如果节点总
 
 >示例 1：
 >
->![k个一组翻转链表1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2Fk%E4%B8%AA%E4%B8%80%E7%BB%84%E7%BF%BB%E8%BD%AC%E9%93%BE%E8%A1%A81.png)
+>![k个一组翻转链表1.png](../img/算法/k个一组翻转链表1.png)
 >
 >输入：head = [1,2,3,4,5], k = 2
 >
@@ -439,7 +439,7 @@ k 是一个正整数，它的值小于或等于链表的长度。如果节点总
 
 >示例 2：
 >
->![k个一组翻转链表2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2Fk%E4%B8%AA%E4%B8%80%E7%BB%84%E7%BF%BB%E8%BD%AC%E9%93%BE%E8%A1%A82.png)
+>![k个一组翻转链表2.png](../img/算法/k个一组翻转链表2.png)
 >
 >输入：head = [1,2,3,4,5], k = 3
 >
@@ -1801,7 +1801,7 @@ https://leetcode.cn/problems/reverse-linked-list-ii/description/?envType=study-p
 
 >示例 1：
 >
->![翻转链表2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%BF%BB%E8%BD%AC%E9%93%BE%E8%A1%A82.png)
+>![翻转链表2.png](../img/算法/翻转链表2.png)
 >
 >输入：head = [1,2,3,4,5], left = 2, right = 4
 >
@@ -2510,7 +2510,7 @@ https://leetcode.cn/problems/trapping-rain-water/description/?envType=study-plan
 
 >示例 1：
 >
->![接雨水.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E6%8E%A5%E9%9B%A8%E6%B0%B4.png)
+>![接雨水.png](../img/算法/接雨水.png)
 >
 >输入：height = [0,1,0,2,1,0,1,3,2,1,2,1]
 >
@@ -2961,7 +2961,7 @@ https://leetcode.cn/problems/remove-nth-node-from-end-of-list/description/?envTy
 
 >示例 1：
 >
->![删除链表的倒数第n个节点.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%88%A0%E9%99%A4%E9%93%BE%E8%A1%A8%E7%9A%84%E5%80%92%E6%95%B0%E7%AC%ACn%E4%B8%AA%E8%8A%82%E7%82%B9.png)
+>![删除链表的倒数第n个节点.png](../img/算法/删除链表的倒数第n个节点.png)
 >
 >输入：head = [1,2,3,4,5], n = 2
 >
@@ -3317,7 +3317,7 @@ https://leetcode.cn/problems/remove-duplicates-from-sorted-list-ii/description/?
 
 >示例 1：
 >
->![删除排序链表中的重复元素2-1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%88%A0%E9%99%A4%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A02-1.png)
+>![删除排序链表中的重复元素2-1.png](../img/算法/删除排序链表中的重复元素2-1.png)
 >
 >输入：head = [1,2,3,3,4,4,5]
 >
@@ -5501,7 +5501,7 @@ https://leetcode.cn/problems/maximum-depth-of-binary-tree/description/?envType=s
 >示例 1：
 >
 >
->![二叉树的最大深度.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6.png)
+>![二叉树的最大深度.png](../img/算法/二叉树的最大深度.png)
 >
 >
 >输入：root = [3,9,20,null,null,15,7]
@@ -5569,7 +5569,7 @@ https://leetcode.cn/problems/symmetric-tree/description/?envType=study-plan-v2&e
 
 >示例 1：
 >
->![对称二叉树1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%AF%B9%E7%A7%B0%E4%BA%8C%E5%8F%89%E6%A0%911.png)
+>![对称二叉树1.png](../img/算法/对称二叉树1.png)
 >
 >输入：root = [1,2,2,3,4,4,3]
 >
@@ -5577,7 +5577,7 @@ https://leetcode.cn/problems/symmetric-tree/description/?envType=study-plan-v2&e
 
 >示例 2：
 >
->![对称二叉树2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%AF%B9%E7%A7%B0%E4%BA%8C%E5%8F%89%E6%A0%912.png)
+>![对称二叉树2.png](../img/算法/对称二叉树2.png)
 >
 >输入：root = [1,2,2,null,3,null,3]
 >
@@ -6088,7 +6088,7 @@ https://leetcode.cn/problems/rotate-image/description/?envType=study-plan-v2&env
 
 >示例 1：
 >
->![旋转图像1.png](..%2Fimg%2F%CB%E3%B7%A8%2F%D0%FD%D7%AA%CD%BC%CF%F11.png)
+>![旋转图像1.png](../img/算法/旋转图像1.png)
 >
 >输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
 >
@@ -6096,7 +6096,7 @@ https://leetcode.cn/problems/rotate-image/description/?envType=study-plan-v2&env
 
 >示例 2：
 >
->![旋转图像2.png](..%2Fimg%2F%CB%E3%B7%A8%2F%D0%FD%D7%AA%CD%BC%CF%F12.png)
+>![旋转图像2.png](../img/算法/旋转图像2.png)
 >
 >输入：matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
 >
@@ -7053,7 +7053,7 @@ https://leetcode.cn/problems/path-sum/description/?envType=study-plan-v2&envId=t
 
 >示例 1：
 >
->![路径总和1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8C1.png)
+>![路径总和1.png](../img/算法/路径总和1.png)
 >
 >输入：root = [5,4,8,11,null,13,4,7,2,null,null,null,1], targetSum = 22
 >
@@ -7063,7 +7063,7 @@ https://leetcode.cn/problems/path-sum/description/?envType=study-plan-v2&envId=t
 
 >示例 2：
 >
->![路径总和2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8C2.png)
+>![路径总和2.png](../img/算法/路径总和2.png)
 >
 >输入：root = [1,2,3], targetSum = 5
 >
@@ -7697,7 +7697,7 @@ https://leetcode.cn/problems/invert-binary-tree/description/?envType=study-plan-
 
 >示例 1：
 >
->![翻转二叉树1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%BF%BB%E8%BD%AC%E4%BA%8C%E5%8F%89%E6%A0%911.png)
+>![翻转二叉树1.png](../img/算法/翻转二叉树1.png)
 >
 >输入：root = [4,2,7,1,3,6,9]
 >
@@ -7705,7 +7705,7 @@ https://leetcode.cn/problems/invert-binary-tree/description/?envType=study-plan-
 
 >示例 2：
 >
->![翻转二叉树2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%BF%BB%E8%BD%AC%E4%BA%8C%E5%8F%89%E6%A0%912.png)
+>![翻转二叉树2.png](../img/算法/翻转二叉树2.png)
 >
 >输入：root = [2,1,3]
 >

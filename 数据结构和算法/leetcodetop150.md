@@ -973,7 +973,7 @@ https://leetcode.cn/problems/trapping-rain-water/description/?envType=study-plan
 
 示例 1：
 
-![接雨水.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E6%8E%A5%E9%9B%A8%E6%B0%B4.png)
+![接雨水.png](../img/算法/接雨水.png)
 
 输入：height = [0,1,0,2,1,0,1,3,2,1,2,1]
 
@@ -1884,7 +1884,7 @@ https://leetcode.cn/problems/container-with-most-water/description/?envType=stud
 
 示例 1：
 
-![盛水最多的容器.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%9B%9B%E6%B0%B4%E6%9C%80%E5%A4%9A%E7%9A%84%E5%AE%B9%E5%99%A8.png)
+![盛水最多的容器.png](../img/算法/盛水最多的容器.png)
 
 输入：[1,8,6,2,5,4,8,3,7]
 
@@ -2322,7 +2322,7 @@ https://leetcode.cn/problems/valid-sudoku/description/?envType=study-plan-v2&env
 
 示例 1：
 
-![有效的数独.png](..%2Fimg%2F%CB%E3%B7%A8%2F%D3%D0%D0%A7%B5%C4%CA%FD%B6%C0.png)
+![有效的数独.png](../img/算法/有效的数独.png)
 
 输入：board =
 
@@ -2414,7 +2414,7 @@ https://leetcode.cn/problems/spiral-matrix/description/?envType=study-plan-v2&en
 
 示例 1：
 
-![螺旋矩阵1.png](..%2Fimg%2F%CB%E3%B7%A8%2F%C2%DD%D0%FD%BE%D8%D5%F31.png)
+![螺旋矩阵1.png](../img/算法/螺旋矩阵1.png)
 
 输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
 
@@ -2422,7 +2422,7 @@ https://leetcode.cn/problems/spiral-matrix/description/?envType=study-plan-v2&en
 
 示例 2：
 
-![螺旋矩阵2.png](..%2Fimg%2F%CB%E3%B7%A8%2F%C2%DD%D0%FD%BE%D8%D5%F32.png)
+![螺旋矩阵2.png](../img/算法/螺旋矩阵2.png)
 
 输入：matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
 
@@ -2480,7 +2480,7 @@ https://leetcode.cn/problems/rotate-image/description/?envType=study-plan-v2&env
 
 示例 1：
 
-![旋转图像1.png](..%2Fimg%2F%CB%E3%B7%A8%2F%D0%FD%D7%AA%CD%BC%CF%F11.png)
+![旋转图像1.png](../img/算法/旋转图像1.png)
 
 输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
 
@@ -2488,7 +2488,7 @@ https://leetcode.cn/problems/rotate-image/description/?envType=study-plan-v2&env
 
 示例 2：
 
-![旋转图像2.png](..%2Fimg%2F%CB%E3%B7%A8%2F%D0%FD%D7%AA%CD%BC%CF%F12.png)
+![旋转图像2.png](../img/算法/旋转图像2.png)
 
 输入：matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
 
@@ -2532,7 +2532,7 @@ https://leetcode.cn/problems/set-matrix-zeroes/description/?envType=study-plan-v
 
 示例 1：
 
-![矩阵置零1.png](..%2Fimg%2F%CB%E3%B7%A8%2F%BE%D8%D5%F3%D6%C3%C1%E31.png)
+![矩阵置零1.png](../img/算法/矩阵置零1.png)
 
 输入：matrix = [[1,1,1],[1,0,1],[1,1,1]]
 
@@ -2540,7 +2540,7 @@ https://leetcode.cn/problems/set-matrix-zeroes/description/?envType=study-plan-v
 
 示例 2：
 
-![矩阵置零2.png](..%2Fimg%2F%CB%E3%B7%A8%2F%BE%D8%D5%F3%D6%C3%C1%E32.png)
+![矩阵置零2.png](../img/算法/矩阵置零2.png)
 
 输入：matrix = [[0,1,2,0],[3,4,5,2],[1,3,1,5]]
 
@@ -2601,7 +2601,7 @@ https://leetcode.cn/problems/game-of-life/description/?envType=study-plan-v2&env
 
 示例 1：
 
-![生命游戏1.png](..%2Fimg%2F%CB%E3%B7%A8%2F%C9%FA%C3%FC%D3%CE%CF%B71.png)
+![生命游戏1.png](../img/算法/生命游戏1.png)
 
 输入：board = [[0,1,0],[0,0,1],[1,1,1],[0,0,0]]
 
@@ -2609,7 +2609,7 @@ https://leetcode.cn/problems/game-of-life/description/?envType=study-plan-v2&env
 
 示例 2：
 
-![生命游戏2.png](..%2Fimg%2F%CB%E3%B7%A8%2F%C9%FA%C3%FC%D3%CE%CF%B72.png)
+![生命游戏2.png](../img/算法/生命游戏2.png)
 
 输入：board = [[1,1],[1,0]]
 
@@ -3924,7 +3924,7 @@ https://leetcode.cn/problems/linked-list-cycle/description/?envType=study-plan-v
 
 示例 1：
 
-![环形链表1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%8E%AF%E5%BD%A2%E9%93%BE%E8%A1%A81.png)
+![环形链表1.png](../img/算法/环形链表1.png)
 
 输入：head = [3,2,0,-4], pos = 1
 
@@ -3934,7 +3934,7 @@ https://leetcode.cn/problems/linked-list-cycle/description/?envType=study-plan-v
 
 示例 2：
 
-![环形链表2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%8E%AF%E5%BD%A2%E9%93%BE%E8%A1%A82.png)
+![环形链表2.png](../img/算法/环形链表2.png)
 
 输入：head = [1,2], pos = 0
 
@@ -3944,7 +3944,7 @@ https://leetcode.cn/problems/linked-list-cycle/description/?envType=study-plan-v
 
 示例 3：
 
-![环形链表3.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%8E%AF%E5%BD%A2%E9%93%BE%E8%A1%A83.png)
+![环形链表3.png](../img/算法/环形链表3.png)
 
 输入：head = [1], pos = -1
 输出：false
@@ -4003,7 +4003,7 @@ https://leetcode.cn/problems/add-two-numbers/description/?envType=study-plan-v2&
 
 示例 1：
 
-![链表-两数相加.png](..%2Fimg%2F%CB%E3%B7%A8%2F%C1%B4%B1%ED-%C1%BD%CA%FD%CF%E0%BC%D3.png)
+![链表-两数相加.png](../img/算法/链表-两数相加.png)
 
 输入：l1 = [2,4,3], l2 = [5,6,4]
 
@@ -4071,7 +4071,7 @@ https://leetcode.cn/problems/merge-two-sorted-lists/description/?envType=study-p
 
 示例 1：
 
-![合并两个有序链表.png](..%2Fimg%2F%CB%E3%B7%A8%2F%BA%CF%B2%A2%C1%BD%B8%F6%D3%D0%D0%F2%C1%B4%B1%ED.png)
+![合并两个有序链表.png](../img/算法/合并两个有序链表.png)
 
 输入：l1 = [1,2,4], l2 = [1,3,4]
 
@@ -4150,7 +4150,7 @@ https://leetcode.cn/problems/copy-list-with-random-pointer/description/?envType=
 
 示例 1：
 
-![随机链表的复制1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E9%9A%8F%E6%9C%BA%E9%93%BE%E8%A1%A8%E7%9A%84%E5%A4%8D%E5%88%B61.png)
+![随机链表的复制1.png](../img/算法/随机链表的复制1.png)
 
 输入：head = [[7,null],[13,0],[11,4],[10,2],[1,0]]
 
@@ -4158,7 +4158,7 @@ https://leetcode.cn/problems/copy-list-with-random-pointer/description/?envType=
 
 示例 2：
 
-![随机链表的复制2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E9%9A%8F%E6%9C%BA%E9%93%BE%E8%A1%A8%E7%9A%84%E5%A4%8D%E5%88%B62.png)
+![随机链表的复制2.png](../img/算法/随机链表的复制2.png)
 
 输入：head = [[1,1],[2,1]]
 
@@ -4166,7 +4166,7 @@ https://leetcode.cn/problems/copy-list-with-random-pointer/description/?envType=
 
 示例 3：
 
-![随机链表的复制3.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E9%9A%8F%E6%9C%BA%E9%93%BE%E8%A1%A8%E7%9A%84%E5%A4%8D%E5%88%B63.png)
+![随机链表的复制3.png](../img/算法/随机链表的复制3.png)
 
 输入：head = [[3,null],[3,0],[3,null]]
 
@@ -4226,7 +4226,7 @@ https://leetcode.cn/problems/reverse-linked-list-ii/description/?envType=study-p
 
 示例 1：
 
-![翻转链表2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%BF%BB%E8%BD%AC%E9%93%BE%E8%A1%A82.png)
+![翻转链表2.png](../img/算法/翻转链表2.png)
 
 输入：head = [1,2,3,4,5], left = 2, right = 4
 
@@ -4295,7 +4295,7 @@ k 是一个正整数，它的值小于或等于链表的长度。如果节点总
 
 示例 1：
 
-![k个一组翻转链表1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2Fk%E4%B8%AA%E4%B8%80%E7%BB%84%E7%BF%BB%E8%BD%AC%E9%93%BE%E8%A1%A81.png)
+![k个一组翻转链表1.png](../img/算法/k个一组翻转链表1.png)
 
 输入：head = [1,2,3,4,5], k = 2
 
@@ -4303,7 +4303,7 @@ k 是一个正整数，它的值小于或等于链表的长度。如果节点总
 
 示例 2：
 
-![k个一组翻转链表2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2Fk%E4%B8%AA%E4%B8%80%E7%BB%84%E7%BF%BB%E8%BD%AC%E9%93%BE%E8%A1%A82.png)
+![k个一组翻转链表2.png](../img/算法/k个一组翻转链表2.png)
 
 输入：head = [1,2,3,4,5], k = 3
 
@@ -4362,7 +4362,7 @@ https://leetcode.cn/problems/remove-nth-node-from-end-of-list/description/?envTy
 
 示例 1：
 
-![删除链表的倒数第n个节点.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%88%A0%E9%99%A4%E9%93%BE%E8%A1%A8%E7%9A%84%E5%80%92%E6%95%B0%E7%AC%ACn%E4%B8%AA%E8%8A%82%E7%82%B9.png)
+![删除链表的倒数第n个节点.png](../img/算法/删除链表的倒数第n个节点.png)
 
 输入：head = [1,2,3,4,5], n = 2
 
@@ -4430,7 +4430,7 @@ https://leetcode.cn/problems/remove-duplicates-from-sorted-list-ii/description/?
 
 示例 1：
 
-![删除排序链表中的重复元素2-1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%88%A0%E9%99%A4%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A02-1.png)
+![删除排序链表中的重复元素2-1.png](../img/算法/删除排序链表中的重复元素2-1.png)
 
 输入：head = [1,2,3,3,4,4,5]
 
@@ -4438,7 +4438,7 @@ https://leetcode.cn/problems/remove-duplicates-from-sorted-list-ii/description/?
 
 示例 2：
 
-![删除排序链表中的重复元素2-2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%88%A0%E9%99%A4%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A02-2.png)
+![删除排序链表中的重复元素2-2.png](../img/算法/删除排序链表中的重复元素2-2.png)
 
 输入：head = [1,1,1,2,3]
 
@@ -4498,7 +4498,7 @@ https://leetcode.cn/problems/rotate-list/description/?envType=study-plan-v2&envI
 
 示例 1：
 
-![旋转链表1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E6%97%8B%E8%BD%AC%E9%93%BE%E8%A1%A81.png)
+![旋转链表1.png](../img/算法/旋转链表1.png)
 
 输入：head = [1,2,3,4,5], k = 2
 
@@ -4506,7 +4506,7 @@ https://leetcode.cn/problems/rotate-list/description/?envType=study-plan-v2&envI
 
 示例 2：
 
-![旋转链表2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E6%97%8B%E8%BD%AC%E9%93%BE%E8%A1%A82.png)
+![旋转链表2.png](../img/算法/旋转链表2.png)
 
 输入：head = [0,1,2], k = 4
 
@@ -4572,7 +4572,7 @@ https://leetcode.cn/problems/partition-list/description/?envType=study-plan-v2&e
 
 示例 1：
 
-![分隔链表.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%88%86%E9%9A%94%E9%93%BE%E8%A1%A8.png)
+![分隔链表.png](../img/算法/分隔链表.png)
 
 输入：head = [1,4,3,2,5,2], x = 3
 
@@ -4789,7 +4789,7 @@ https://leetcode.cn/problems/maximum-depth-of-binary-tree/description/?envType=s
 示例 1：
 
 
-![二叉树的最大深度.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6.png)
+![二叉树的最大深度.png](../img/算法/二叉树的最大深度.png)
 
 
 输入：root = [3,9,20,null,null,15,7]
@@ -4847,7 +4847,7 @@ https://leetcode.cn/problems/same-tree/description/?envType=study-plan-v2&envId=
 
 示例 1：
 
-![相同的树1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%9B%B8%E5%90%8C%E7%9A%84%E6%A0%911.png)
+![相同的树1.png](../img/算法/相同的树1.png)
 
 输入：p = [1,2,3], q = [1,2,3]
 
@@ -4855,7 +4855,7 @@ https://leetcode.cn/problems/same-tree/description/?envType=study-plan-v2&envId=
 
 示例 2：
 
-![相同的树2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%9B%B8%E5%90%8C%E7%9A%84%E6%A0%912.png)
+![相同的树2.png](../img/算法/相同的树2.png)
 
 输入：p = [1,2], q = [1,null,2]
 
@@ -4863,7 +4863,7 @@ https://leetcode.cn/problems/same-tree/description/?envType=study-plan-v2&envId=
 
 示例 3：
 
-![相同的树3.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%9B%B8%E5%90%8C%E7%9A%84%E6%A0%913.png)
+![相同的树3.png](../img/算法/相同的树3.png)
 
 输入：p = [1,2,1], q = [1,1,2]
 
@@ -4913,7 +4913,7 @@ https://leetcode.cn/problems/invert-binary-tree/description/?envType=study-plan-
 
 示例 1：
 
-![翻转二叉树1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%BF%BB%E8%BD%AC%E4%BA%8C%E5%8F%89%E6%A0%911.png)
+![翻转二叉树1.png](../img/算法/翻转二叉树1.png)
 
 输入：root = [4,2,7,1,3,6,9]
 
@@ -4921,7 +4921,7 @@ https://leetcode.cn/problems/invert-binary-tree/description/?envType=study-plan-
 
 示例 2：
 
-![翻转二叉树2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E7%BF%BB%E8%BD%AC%E4%BA%8C%E5%8F%89%E6%A0%912.png)
+![翻转二叉树2.png](../img/算法/翻转二叉树2.png)
 
 输入：root = [2,1,3]
 
@@ -4980,7 +4980,7 @@ https://leetcode.cn/problems/symmetric-tree/description/?envType=study-plan-v2&e
 
 示例 1：
 
-![对称二叉树1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%AF%B9%E7%A7%B0%E4%BA%8C%E5%8F%89%E6%A0%911.png)
+![对称二叉树1.png](../img/算法/对称二叉树1.png)
 
 输入：root = [1,2,2,3,4,4,3]
 
@@ -4988,7 +4988,7 @@ https://leetcode.cn/problems/symmetric-tree/description/?envType=study-plan-v2&e
 
 示例 2：
 
-![对称二叉树2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%AF%B9%E7%A7%B0%E4%BA%8C%E5%8F%89%E6%A0%912.png)
+![对称二叉树2.png](../img/算法/对称二叉树2.png)
 
 输入：root = [1,2,2,null,3,null,3]
 
@@ -5117,7 +5117,7 @@ https://leetcode.cn/problems/construct-binary-tree-from-inorder-and-postorder-tr
 
 示例 1:
 
-![从中序和后序遍历构造二叉树.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E4%BB%8E%E4%B8%AD%E5%BA%8F%E5%92%8C%E5%90%8E%E5%BA%8F%E9%81%8D%E5%8E%86%E6%9E%84%E9%80%A0%E4%BA%8C%E5%8F%89%E6%A0%91.png)
+![从中序和后序遍历构造二叉树.png](../img/算法/从中序和后序遍历构造二叉树.png)
 
 输入：inorder = [9,3,15,20,7], postorder = [9,15,7,20,3]
 
@@ -5206,7 +5206,7 @@ Node *next;
 
 示例 1：
 
-![删除![填充每个节点的下一个右侧节点指针2-1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%A1%AB%E5%85%85%E6%AF%8F%E4%B8%AA%E8%8A%82%E7%82%B9%E7%9A%84%E4%B8%8B%E4%B8%80%E4%B8%AA%E5%8F%B3%E4%BE%A7%E8%8A%82%E7%82%B9%E6%8C%87%E9%92%882-1.png)排序链表中的重复元素2-1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E5%88%A0%E9%99%A4%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A02-1.png)
+![删除![填充每个节点的下一个右侧节点指针2-1.png](../img/算法/填充每个节点的下一个右侧节点指针2-1.png)排序链表中的重复元素2-1.png](../img/算法/删除排序链表中的重复元素2-1.png)
 
 输入：root = [1,2,3,4,5,null,7]
 
@@ -5273,7 +5273,7 @@ https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/description/?env
 
 示例 1：
 
-![二叉树的最大深度.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E6%B7%B1%E5%BA%A6.png)
+![二叉树的最大深度.png](../img/算法/二叉树的最大深度.png)
 
 输入：root = [1,2,5,3,4,null,6]
 
@@ -5338,7 +5338,7 @@ https://leetcode.cn/problems/path-sum/description/?envType=study-plan-v2&envId=t
 
 示例 1：
 
-![路径总和1.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8C1.png)
+![路径总和1.png](../img/算法/路径总和1.png)
 
 输入：root = [5,4,8,11,null,13,4,7,2,null,null,null,1], targetSum = 22
 
@@ -5348,7 +5348,7 @@ https://leetcode.cn/problems/path-sum/description/?envType=study-plan-v2&envId=t
 
 示例 2：
 
-![路径总和2.png](..%2Fimg%2F%E7%AE%97%E6%B3%95%2F%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8C2.png)
+![路径总和2.png](../img/算法/路径总和2.png)
 
 输入：root = [1,2,3], targetSum = 5
 

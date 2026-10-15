@@ -142,7 +142,7 @@ Apache HBase是一个分布式的NoSQL数据库，基于Hadoop生态系统，用
 因而，**传输一个由多个块组成的文件的时间取决于磁盘传输速率**。  
 &emsp; 如果寻址时间约为10ms，而传输速率为100MB/s，为了使寻址时间仅占传输时间的1%，我们要将块大小设置约为100MB。默认的块大小128MB。  
 &emsp; 块的大小：10ms×100×100M/s = 100M，如图  
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/HDFS%E5%9D%97.png"/>  
+<img src="../../img/external/HDFS块.png"/>  
 &emsp; 增加文件块大小，需要增加磁盘的传输速率。
 
 ### 6、hadoop的块大小，从哪个版本开始是128M
@@ -152,7 +152,7 @@ Apache HBase是一个分布式的NoSQL数据库，基于Hadoop生态系统，用
 &emsp; HDFS存储机制，包括HDFS的**写入数据过程**和**读取数据过程**两部分  
 &emsp; **HDFS写数据过程**
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/HDFS%E5%86%99%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B.png"/>  
+<img src="../../img/external/HDFS写数据流程.png"/>  
 <p align="center">
 </p>
 </p>  
@@ -169,7 +169,7 @@ dn1每传一个packet会放入一个应答队列等待应答。
 
 &emsp; **HDFS读数据过程**
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/HDFS%E8%AF%BB%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B.png"/>  
+<img src="../../img/external/HDFS读数据流程.png"/>  
 <p align="center">
 </p>
 </p>  
@@ -181,7 +181,7 @@ dn1每传一个packet会放入一个应答队列等待应答。
 
 ### 8、secondary namenode工作机制（☆☆☆☆☆）
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/secondary%20namenode%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6.png"/>  
+<img src="../../img/external/secondary namenode工作机制.png"/>  
 <p align="center">
 </p>
 </p>  
@@ -212,7 +212,7 @@ dn1每传一个packet会放入一个应答队列等待应答。
 
 ### 10、HDFS组成架构（☆☆☆☆☆）
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/HDFS%E7%BB%84%E6%88%90%E6%9E%B6%E6%9E%84.png"/>  
+<img src="../../img/external/HDFS组成架构.png"/>  
 <p align="center">
 </p>
 </p>  
@@ -239,7 +239,7 @@ dn1每传一个packet会放入一个应答队列等待应答。
 
 ### 11、HAnamenode 是如何工作的? （☆☆☆☆☆）
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/HAnamenode%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6.png"/>  
+<img src="../../img/external/HAnamenode工作机制.png"/>  
 <p align="center">
 </p>
 </p>  
@@ -323,7 +323,7 @@ FileInputFormat源码解析(input.getSplits(job))
 ### 6、MapTask和ReduceTask工作机制（☆☆☆☆☆）（也可回答MapReduce工作原理）
 **MapTask工作机制**
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/MR-Pics/MapTask%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6.png"/>  
+<img src="../../img/external/MapTask工作机制.png"/>  
 <p align="center">
 </p>
 </p>  
@@ -336,7 +336,7 @@ FileInputFormat源码解析(input.getSplits(job))
 
 **ReduceTask工作机制**
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/MR-Pics/ReduceTask%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6.png"/>  
+<img src="../../img/external/ReduceTask工作机制.png"/>  
 <p align="center">
 </p>
 </p>  
@@ -369,7 +369,7 @@ FileInputFormat源码解析(input.getSplits(job))
 &emsp; （2）一个是在reduce side发生在copy后 reduce前。
 
 ### 8、描述mapReduce中shuffle阶段的工作流程，如何优化shuffle阶段（☆☆☆☆☆）
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/MR-Pics/mapReduce%E4%B8%ADshuffle%E9%98%B6%E6%AE%B5%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B.png"/>  
+<img src="../../img/external/mapReduce中shuffle阶段的工作流程.png"/>  
 
 分区，排序，溢写，拷贝到对应reduce机器上，增加combiner，压缩溢写的文件。
 
@@ -380,7 +380,7 @@ FileInputFormat源码解析(input.getSplits(job))
 &emsp; Combiner是在每一个maptask所在的节点运行；  
 &emsp; Reducer是接收全局所有Mapper的输出结果。
 
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/MR-Pics/mapReduce%E4%B8%ADcombiner%E4%BD%9C%E7%94%A8.png"/>
+<img src="../../img/external/mapReduce中combiner作用.png"/>
 
 ### 10、如果没有定义partitioner，那数据在被送达reducer前是如何被分区的？
 &emsp; 如果没有自定义的 partitioning，则默认的 partition 算法，即根据每一条数据的 key 的 hashcode 值摸运算（%）reduce 的数量，得到的数字就是“分区号“。
@@ -423,7 +423,7 @@ FileInputFormat源码解析(input.getSplits(job))
 &emsp; Hadoop中常用的压缩算法有**bzip2、gzip、lzo、snappy**，其中lzo、snappy需要操作系统安装native库才可以支持。  
 &emsp; 数据可以压缩的位置如下所示。
 <p align="center">
-<img src="https://github.com/Dr11ft/BigDataGuide/blob/master/Pics/Hadoop%E9%9D%A2%E8%AF%95%E9%A2%98Pics/YARN-Pics/MapReduce%E6%95%B0%E6%8D%AE%E5%8E%8B%E7%BC%A9.png"/>  
+<img src="../../img/external/MapReduce数据压缩.png"/>  
 <p align="center">
 </p>
 </p>  

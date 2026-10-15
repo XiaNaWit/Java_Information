@@ -128,7 +128,7 @@ X-Cache: HIT
 
 HTTP 使用 URL（ **U** niform **R**esource **L**ocator，统一资源定位符）来定位资源，它是  URI（**U**niform **R**esource **I**dentifier，统一资源标识符）的子集，URL 在 URI 的基础上增加了定位能力。URI 除了包含 URL，还包含 URN（Uniform Resource Name，统一资源名称），它只是用来定义一个资源的名称，并不具备定位该资源的能力。例如 urn:isbn:0451450523 用来定义一个书籍名称，但是却没有表示怎么找到这本书。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/8441b2c4-dca7-4d6b-8efb-f22efccaf331.png" width="500px"> </div><br>
+<div align="center"> <img src="../../img/external/8441b2c4-dca7-4d6b-8efb-f22efccaf331.png" width="500px"> </div><br>
 
 - [wikipedia：统一资源标志符](https://zh.wikipedia.org/wiki/统一资源标志符)
 - [wikipedia: URL](https://en.wikipedia.org/wiki/URL)
@@ -220,7 +220,7 @@ DELETE /file.html HTTP/1.1
 CONNECT www.example.com:443 HTTP/1.1
 ```
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/dc00f70e-c5c8-4d20-baf1-2d70014a97e3.jpg" width=""/> </div><br>
+<div align="center"> <img src="../../img/external/dc00f70e-c5c8-4d20-baf1-2d70014a97e3.jpg" width=""/> </div><br>
 
 ### TRACE
 
@@ -372,7 +372,7 @@ CONNECT www.example.com:443 HTTP/1.1
 
 ### 连接管理
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/HTTP1_x_Connections.png" width="800"/> </div><br>
+<div align="center"> <img src="../../img/external/HTTP1_x_Connections.png" width="800"/> </div><br>
 
 #### 1. 短连接与长连接
 
@@ -701,11 +701,11 @@ HTTP/1.1 使用虚拟主机技术，使得一台服务器拥有多个域名，�
 
 - 用户察觉得到正向代理的存在。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/a314bb79-5b18-4e63-a976-3448bffa6f1b.png" width=""/> </div><br>
+<div align="center"> <img src="../../img/external/a314bb79-5b18-4e63-a976-3448bffa6f1b.png" width=""/> </div><br>
 
 - 而反向代理一般位于内部网络中，用户察觉不到。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/2d09a847-b854-439c-9198-b29c65810944.png" width=""/> </div><br>
+<div align="center"> <img src="../../img/external/2d09a847-b854-439c-9198-b29c65810944.png" width=""/> </div><br>
 
 #### 2. 网关
 
@@ -727,7 +727,7 @@ HTTPS 并不是新协议，而是让 HTTP 先和 SSL（Secure Sockets Layer）�
 
 通过使用 SSL，HTTPS 具有了加密（防窃听）、认证（防伪装）和完整性保护（防篡改）。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/ssl-offloading.jpg" width="700"/> </div><br>
+<div align="center"> <img src="../../img/external/ssl-offloading.jpg" width="700"/> </div><br>
 
 ### 加密
 
@@ -738,7 +738,7 @@ HTTPS 并不是新协议，而是让 HTTP 先和 SSL（Secure Sockets Layer）�
 - 优点：运算速度快；
 - 缺点：无法安全地将密钥传输给通信方。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/7fffa4b8-b36d-471f-ad0c-a88ee763bb76.png" width="600"/> </div><br>
+<div align="center"> <img src="../../img/external/7fffa4b8-b36d-471f-ad0c-a88ee763bb76.png" width="600"/> </div><br>
 
 #### 2.非对称密钥加密
 
@@ -751,7 +751,7 @@ HTTPS 并不是新协议，而是让 HTTP 先和 SSL（Secure Sockets Layer）�
 - 优点：可以更安全地将公开密钥传输给通信发送方；
 - 缺点：运算速度慢。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/39ccb299-ee99-4dd1-b8b4-2f9ec9495cb4.png" width="600"/> </div><br>
+<div align="center"> <img src="../../img/external/39ccb299-ee99-4dd1-b8b4-2f9ec9495cb4.png" width="600"/> </div><br>
 
 #### 3. HTTPS 采用的加密方式
 
@@ -760,7 +760,7 @@ HTTPS 并不是新协议，而是让 HTTP 先和 SSL（Secure Sockets Layer）�
 - 使用非对称密钥加密方式，传输对称密钥加密方式所需要的 Secret Key，从而保证安全性;
 - 获取到 Secret Key 后，再使用对称密钥加密方式进行通信，从而保证效率。（下图中的 Session Key 就是 Secret Key）
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/How-HTTPS-Works.png" width="600"/> </div><br>
+<div align="center"> <img src="../../img/external/How-HTTPS-Works.png" width="600"/> </div><br>
 
 ### 认证
 
@@ -833,7 +833,7 @@ HTTP/1.x 实现简单是以牺牲性能为代价的：
 
 HTTP/2.0 将报文分成 HEADERS 帧和 DATA 帧，它们都是二进制格式的。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/86e6a91d-a285-447a-9345-c5484b8d0c47.png" width="400"/> </div><br>
+<div align="center"> <img src="../../img/external/86e6a91d-a285-447a-9345-c5484b8d0c47.png" width="400"/> </div><br>
 
 在通信过程中，只会有一个 TCP 连接存在，它承载了任意数量的双向数据流（Stream）。
 
@@ -841,13 +841,13 @@ HTTP/2.0 将报文分成 HEADERS 帧和 DATA 帧，它们都是二进制格式�
 - 消息（Message）是与逻辑请求或响应对应的完整的一系列帧。
 - 帧（Frame）是最小的通信单位，来自不同数据流的帧可以交错发送，然后再根据每个帧头的数据流标识符重新组装。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/af198da1-2480-4043-b07f-a3b91a88b815.png" width="600"/> </div><br>
+<div align="center"> <img src="../../img/external/af198da1-2480-4043-b07f-a3b91a88b815.png" width="600"/> </div><br>
 
 ### 服务端推送
 
 HTTP/2.0 在客户端请求一个资源时，会把相关的资源一起发送给客户端，客户端就不需要再次发起请求了。例如客户端请求 page.html 页面，服务端就把 script.js 和 style.css 等与之相关的资源一起发给客户端。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e3f1657c-80fc-4dfa-9643-bf51abd201c6.png" width="800"/> </div><br>
+<div align="center"> <img src="../../img/external/e3f1657c-80fc-4dfa-9643-bf51abd201c6.png" width="800"/> </div><br>
 
 ### 首部压缩
 
@@ -857,7 +857,7 @@ HTTP/2.0 要求客户端和服务器同时维护和更新一个包含之前见�
 
 不仅如此，HTTP/2.0 也使用 Huffman 编码对首部字段进行压缩。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/_u4E0B_u8F7D.png" width="600"/> </div><br>
+<div align="center"> <img src="../../img/external/_u4E0B_u8F7D.png" width="600"/> </div><br>
 
 ## 八、HTTP/1.1 新特性
 

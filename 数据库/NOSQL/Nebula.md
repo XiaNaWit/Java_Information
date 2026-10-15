@@ -95,12 +95,12 @@
 # 什么是Nebula Graph
 Nebula Graph 是一款开源的、分布式的、易扩展的原生图数据库，能够承载包含数千亿个点和数万亿条边的超大规模数据集，并且提供毫秒级查询
 
-![](../img/数据库/nebula/nebula架构.png)
+![](../../img/数据库/nebula/nebula架构.png)
 
 ## 什么是图数据库
 图数据库是专门存储庞大的图形网络并从中检索信息的数据库。它可以将图中的数据高效存储为点（Vertex）和边（Edge），还可以将属性（Property）附加到点和边上
 
-![](../img/数据库/nebula/图示例.png)
+![](../../img/数据库/nebula/图示例.png)
 
 图数据库适合存储大多数从现实抽象出的数据类型。世界上几乎所有领域的事物都有内在联系，像关系型数据库这样的建模系统会提取实体之间的关系，并将关系单独存储到表和列中，而实体的类型和属性存储在其他列甚至其他表中，这使得数据管理费时费力。
 
@@ -206,7 +206,7 @@ Nebula Graph 使用有向属性图模型，指点和边构成的图，这些边�
 
 本文以下图为例进行简单介绍。
 
-![](../img/数据库/nebula/无限边.png)
+![](../../img/数据库/nebula/无限边.png)
 
 ## walk
 
@@ -225,7 +225,7 @@ trail类型的路径由有限的边序列构成。遍历时只有点可以重复
 
 在 trail 类型中，还有cycle和circuit两种特殊的路径类型，以下图为例对这两种特殊的路径类型进行介绍。
 
-![](../img/数据库/nebula/有限边.png)
+![](../../img/数据库/nebula/有限边.png)
 
 ### cycle
 
@@ -291,7 +291,7 @@ Nebula Graph 由三种服务构成：Graph 服务、Meta 服务和 Storage 服�
 
 下图展示了 Nebula Graph 集群的经典架构。
 
-![](../img/数据库/nebula/集群经典架构.png)
+![](../../img/数据库/nebula/集群经典架构.png)
 
 ### Meta 服务
 在 Nebula Graph 架构中，Meta 服务是由 nebula-metad 进程提供的，负责数据管理，例如 Schema 操作、集群管理和用户权限管理等。
@@ -314,7 +314,7 @@ Nebula Graph 采用计算存储分离架构。Graph 服务负责处理计算请�
 
 ## Meta 服务
 ### Meta 服务架构
-![](../img/数据库/nebula/meta服务架构.png)
+![](../../img/数据库/nebula/meta服务架构.png)
 
 Meta 服务是由 nebula-metad 进程提供的，用户可以根据场景配置 nebula-metad 进程数量：
 - 测试环境中，用户可以在 Nebula Graph 集群中部署 1 个或 3 个 nebula-metad 进程。如果要部署 3 个，用户可以将它们部署在 1 台机器上，或者分别部署在不同的机器上。
@@ -355,7 +355,7 @@ Meta 服务中的作业管理模块负责作业的创建、排队、查询和删
 Graph 服务主要负责处理查询请求，包括解析查询语句、校验语句、生成执行计划以及按照执行计划执行四个大步骤，本文将基于这些步骤介绍 Graph 服务。
 
 ### Graph 服务架构
-![](../img/数据库/nebula/graph服务架构.png)
+![](../../img/数据库/nebula/graph服务架构.png)
 
 查询请求发送到 Graph 服务后，会由如下模块依次处理：
 
@@ -369,7 +369,7 @@ Parser 模块收到请求后，通过 Flex（词法分析工具）和 Bison（�
 
 例如`GO FROM "Tim" OVER like WHERE properties(edge).likeness > 8.0 YIELD dst(edge)`语句转换的 AST 如下。
 
-![](../img/数据库/nebula/parser转换ast.png)
+![](../../img/数据库/nebula/parser转换ast.png)
 ### Validator
 Validator 模块对生成的 AST 进行语义校验，主要包括：
 
@@ -404,7 +404,7 @@ Validator 模块对生成的 AST 进行语义校验，主要包括：
 
 如果配置文件 nebula-graphd.conf中enable_optimizer 设置为 true，Planner 模块会对 Validator 模块生成的执行计划进行优化。如下图所示。
 
-![](../img/数据库/nebula/planner优化.png)
+![](../../img/数据库/nebula/planner优化.png)
 
 #### 优化前
 如上图右侧未优化的执行计划，每个节点依赖另一个节点，例如根节点 Project 依赖 Filter、Filter 依赖 GetNeighbor，最终找到叶子节点 Start，才能开始执行（并非真正执行）。
@@ -422,7 +422,7 @@ RBO 是一个自底向上的探索过程，即对于每个规则而言，都会�
 ### Executor
 Executor 模块包含调度器（Scheduler）和执行器（Executor），通过调度器调度执行计划，让执行器根据执行计划生成对应的执行算子，从叶子节点开始执行，直到根节点结束。如下图所示。
 
-![](../img/数据库/nebula/executor执行.png)
+![](../../img/数据库/nebula/executor执行.png)
 
 每一个执行计划节点都一一对应一个执行算子，节点的输入输出在优化执行计划时已经确定，每个算子只需要拿到输入变量中的值进行计算，最后将计算结果放入对应的输出变量中即可，所以只需要从节点 Start 一步步执行，最后一个算子的输出变量会作为最终结果返回给客户端。
 
@@ -455,7 +455,7 @@ Nebula Graph 的存储包含两个部分，一个是 Meta 相关的存储，称�
 - 高可用性（Raft）
 - 支持向第三方系统进行同步（例如全文索引）
 ### Storage 服务架构
-![](../img/数据库/nebula/storage服务架构.png)
+![](../../img/数据库/nebula/storage服务架构.png)
 
 Storage 服务是由 nebula-storaged 进程提供的，用户可以根据场景配置 nebula-storaged 进程数量，例如测试环境 1 个，生产环境 3 个。
 
@@ -496,7 +496,7 @@ Nebula Graph 使用自行开发的 KVStore，而不是其他开源 KVStore，原
 #### 点数据存储格式
 相比 Nebula Graph 2.x 版本，3.x 版本的每个点多了一个不含 TagID 字段并且无 value 的 key，用于支持无 Tag 的点。
 
-![](../img/数据库/nebula/点数据储存格式.png)
+![](../../img/数据库/nebula/点数据储存格式.png)
 
 |字段|	说明|
 | --- | --- |
@@ -507,7 +507,7 @@ Nebula Graph 使用自行开发的 KVStore，而不是其他开源 KVStore，原
 |SerializedValue|	序列化的 value，用于保存点的属性信息。|
 
 #### 边数据存储格式
-![](../img/数据库/nebula/边数据储存格式.png)
+![](../../img/数据库/nebula/边数据储存格式.png)
 
 |字段|	说明|
 | --- | --- |
@@ -526,12 +526,12 @@ Nebula Graph 使用强类型 Schema。
 ### 数据分片
 由于超大规模关系网络的节点数量高达百亿到千亿，而边的数量更会高达万亿，即使仅存储点和边两者也远大于一般服务器的容量。因此需要有方法将图元素切割，并存储在不同逻辑分片（Partition）上。Nebula Graph 采用边分割的方式。
 
-![](../img/数据库/nebula/数据分片边分隔方式.png)
+![](../../img/数据库/nebula/数据分片边分隔方式.png)
 
 #### 切边与存储放大
 Nebula Graph 中逻辑上的一条边对应着硬盘上的两个键值对（key-value pair），在边的数量和属性较多时，存储放大现象较明显。边的存储方式如下图所示。
 
-![](../img/数据库/nebula/切边与放大储存.png)
+![](../../img/数据库/nebula/切边与放大储存.png)
 
 上图以最简单的两个点和一条边为例，起点 SrcVertex 通过边 EdgeA 连接目的点 DstVertex，形成路径(SrcVertex)-[EdgeA]->(DstVertex)。这两个点和一条边会以 6 个键值对的形式保存在存储层的两个不同分片，即 Partition x 和 Partition y 中，详细说明如下：
 - 点 SrcVertex 的键值保存在 Partition x 中。

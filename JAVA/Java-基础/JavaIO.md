@@ -64,7 +64,7 @@ new BufferedInputStream(new FileInputStream(inputStream));
 - ConcreteComponent（具体对象）和Decorator（抽象装饰器）实现相同的Conponent（接口）并且Decorator（抽象装饰器）里面持有Conponent（接口）对象，可以传递请求。
 - ConcreteComponent（具体装饰器）覆盖Decorator（抽象装饰器）的方法并用super进行调用，传递请求。
 
-![](../img/io/装饰器模式.png)
+![](../../img/io/装饰器模式.png)
 
 ---
 
@@ -405,7 +405,7 @@ public class IOServer {
     }
 }
 ```
-![](../img/io/socket示意图.png)
+![](../../img/io/socket示意图.png)
 ### 特点
 同步阻塞，一个线程只能处理一个请求，如果要处理多个请求需要开启多个线程
 

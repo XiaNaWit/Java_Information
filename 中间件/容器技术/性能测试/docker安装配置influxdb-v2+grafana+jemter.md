@@ -111,7 +111,7 @@ Default Bucket：jemter   # 上文创建的bucket
 
 docker的默认网桥bridge
 
-![](../img/性能测试/16ad4794b38e90e4~tplv-t2oaga2asx-watermark.awebp.webp)
+![](../../../img/性能测试/16ad4794b38e90e4~tplv-t2oaga2asx-watermark.awebp.webp)
 
 如上图所示为Docker中bridge驱动模式的示意图，其中蓝色的模块表示主机上的网卡。当Docker启动时会自动在主机上创建一个虚拟网桥docker0，使用默认网络模式创建docker容器时会自动创建一对儿veth pair接口，一端连接在docker容器中（如图容器中的eth0），一端连接在虚拟网桥docker0上（如图veth）。这种veth pair是一种虚拟网络设备，主要用于不同namespace中（意味着网络隔离）的网络通信，它总是成对存在的。在这里可以把它想象成一对儿靠虚拟网线连接起来的两个虚拟网卡，一端连接着docker容器，一端连接着虚拟网桥docker0。
 

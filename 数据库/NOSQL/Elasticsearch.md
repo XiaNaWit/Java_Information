@@ -88,7 +88,7 @@ E 开头的 term ……………. Zzz 页
 ```
 如果所有的 term 都是英文字符的话，可能这个 term index 就真的是 26 个英文字符表构成的了。但是实际的情况是，term 未必都是英文字符，term 可以是任意的 byte 数组。而且 26 个英文字符也未必是每一个字符都有均等的 term，比如 x 字符开头的 term 可能一个都没有，而 s 开头的 term 又特别多。实际的 term index 是一棵 trie 树（前缀树、字典树）：
 
-![](../img/数据库/elasticsearch/trem-index.png)
+![](../../img/数据库/elasticsearch/trem-index.png)
 
 例子是一个包含 "A", "to", "tea", "ted", "ten", "i", "in", 和 "inn" 的 trie 树。这棵树不会包含所有的 term，它包含的是 term 的一些前缀。通过 term index 可以快速地定位到 term dictionary 的某个 offset，然后从这个位置再往后顺序查找。
 ### FST(finite-state transducer有限状态转换器)
@@ -110,7 +110,7 @@ E 开头的 term ……………. Zzz 页
 - 冗余备份，防止数据丢失；
 - shard异常时负责容错和负载均衡；
 ## 集群简单原理
-![](../img/数据库/elasticsearch/es数据流程.png)
+![](../../img/数据库/elasticsearch/es数据流程.png)
 - es的数据流程为index -> type -> mapping -> document -> field。
 - index被拆分为多个shard
   - 多个shard分布在不同的机器上
@@ -119,11 +119,11 @@ E 开头的 term ……………. Zzz 页
 - 如果是非 master 节点宕机了，那么会由 master 节点，让那个宕机节点上的 primary shard 的身份转移到其他机器上的 replica shard。接着你要是修复了那个宕机机器，重启了之后，master 节点会控制将缺失的 replica shard 分配过去，同步后续修改的数据之类的，让集群恢复正常。
 
 ## 插入数据流程
-![](../img/数据库/elasticsearch/集群1.png)		
+![](../../img/数据库/elasticsearch/集群1.png)		
 写索引是只能写在主分片上，然后同步到副本分片,但是上图中每个节点上都有主分片，一条数据是根据什么策略写到指定的分片上呢？
 - 这个过程是根据下面这个公式决定的
   - `shard = hash(routing) % number_of_primary_shards`
-![](../img/数据库/elasticsearch/写数据流程.png)		
+![](../../img/数据库/elasticsearch/写数据流程.png)		
 - （1）数据写请求发送到 node1 节点，通过路由计算得到值为1，那么对应的数据会应该在主分片S1上。
 - （2）node1节点将请求转发到 S1 主分片所在的节点node2，node2 接受请求并写入到磁盘。
 - （3）并发将数据复制到三个副本分片R1上，其中通过乐观并发控制数据的冲突。一旦所有的副本分片都报告成功，则节点 node2将向node1节点报告成功，然后node1节点向客户端报告成功。
@@ -208,7 +208,7 @@ Raft 将问题分解为：Leader 选举，日志复制，安全性，将这三�
 
 在 Raft 中，节点可能的状态有三种，其转换关系如下：
 
-![](../img/数据库/elasticsearch/raft节点状态.png)
+![](../../img/数据库/elasticsearch/raft节点状态.png)
 
 正常情况下，集群中只有一个 Leader，其他节点全是 Follower 。Follower 都是被动接收请求，从不发送主动任何请求。Candidate 是从 Follower 到 Leader的中间状态。
 
@@ -250,7 +250,7 @@ ES 实现中，候选人不先投自己，而是直接并行发起 RequestVote�
 
 ES 不限制每个节点在某个 term 上只能投一票，节点可以投多票，这样会产生选出多个主的情况：
 
-![](../img/数据库/elasticsearch/多主情况.png)
+![](../../img/数据库/elasticsearch/多主情况.png)
 
 - Node2被选为主：收到的投票为：Node2,Node3
 - Node3被选为主：收到的投票为：Node3,Node1

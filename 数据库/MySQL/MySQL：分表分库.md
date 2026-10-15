@@ -14,7 +14,7 @@
 
 这就是所谓的分库分表。
 
-![img](https://upload-images.jianshu.io/upload_images/14266602-ae74054f45f44e3d?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![img](../../img/external/img_f9b05d22d20f.webp)
 
 ## 2. 用过哪些分库分表中间件？不同的分库分表中间件都有什么优点和缺点？
 
