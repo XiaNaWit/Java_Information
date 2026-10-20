@@ -87,11 +87,11 @@
 >
 > 后来整体迁移到 **Schema 级隔离**：按租户建独立 PostgreSQL schema。**关键实现不是切 `search_path`**，而是在 MyBatis 的 `StatementHandler.beforePrepare` 阶段做 **SQL 表名重写** —— 用 JSqlParser 解析 SQL，递归找到所有物理表，把表名改写成 `租户Schema.表名`，再反射写回 `BoundSql`。
 >
-> 租户上下文放在 `ThreadLocal`（平台 schema / 模板 schema / 租户 schema 三级优先级），Web 请求进来时由 `HandlerInterceptor` 根据登录用户的 `tenantId` 查出 schema 名设置进去，请求结束时清理。"
+> 租户上下文放在 `TransmittableThreadLocal`（平台 schema / 模板 schema / 租户 schema 三级优先级），Web 请求进来时由 `HandlerInterceptor` 根据登录用户的 `tenantId` 查出 schema 名设置进去，请求结束时清理。"
 
 **对应代码**（面试官要证据时可以说）：
 - `SchemaTableNameInnerInterceptor`（468 行，JSqlParser）
-- `TenantSchemaContextHolder`（ThreadLocal 三级优先级）
+- `TenantSchemaContextHolder`（TTL 三级优先级 + Scope 作用域守卫）
 - `TenantSchemaInterceptor`（Web 层设置 / 清理）
 
 ### 3.2 「为什么不用 `search_path`？」← **全篇最值钱的一击**
@@ -127,11 +127,46 @@
 > 原始 SQL 没有 schema 前缀，会落到连接默认的 schema —— 也就是说**一条解析不了的 SQL，可能跨租户读到数据，而且不报错**。
 > 我修过一次同类问题（批量插入 SQL 解析失败、异步写日志没进对应租户 schema）。**正确的做法应该是解析失败就 fail-fast 抛异常**，让问题立刻暴露。"
 
-**Q5. 异步线程、定时任务、MQ 消费者里租户上下文还在吗？**
-> "**不在**，这是 `ThreadLocal` 的固有限制。我们是纯 `ThreadLocal`，**没有** `TaskDecorator`、没有 `TransmittableThreadLocal`，线程池也没设装饰器。
-> 所以 `@Async`、XXL-JOB handler 里取到的 schema 是 `null`，会走兜底落到平台 schema。
-> **我实际修过这个 bug**（异步收集日志写不进对应租户 schema）。当时的解法是**逐调用点显式传 schema**：缓存统一用带 schema 参数的重载，DB 操作由调用方在 `finally` 里手工 set/clear。
-> 我很清楚这不是通用解法，是**打补丁**。更彻底的做法是 `TransmittableThreadLocal`，或者把租户上下文作为显式参数贯穿。"
+**Q5. 异步线程、定时任务里租户上下文还在吗？** ← **你最新做的一处系统性改进，重点讲**
+> "早期确实是个坑：上下文是纯 `ThreadLocal`，`@Async` / XXL-JOB handler 里取到的是 `null`，会兜底落到平台 schema。**我实际踩过一次**（异步收集日志写不进对应租户 schema）。
+> 后来我把它**系统性地改掉了**，做了四件事：
+> ① **上下文容器换成 `TransmittableThreadLocal`（阿里 TTL）** —— 任务提交时捕获快照、执行时回放、执行完恢复；
+> ② **统一包装线程池**：`ThreadPoolTaskExecutor` 加 `TaskDecorator`（`TtlRunnable.get`）；`ScheduledThreadPoolExecutor` 因为**不支持 TaskDecorator**，改用 `TtlExecutors.getTtlScheduledExecutorService` 装饰；
+> ③ **作用域守卫**：把散落在各处的 `set/clear` 改成 `try-with-resources` 的 `Scope`，**退出时恢复进入前的值**而不是无条件 `clear()` —— 否则嵌套调用会把外层上下文误清掉；
+> ④ **fail-fast 开关**：SCHEMA 模式下如果上下文真的丢了，可以选择**抛异常拒绝回落平台 schema**（`tenant.schema.fail-fast`，默认关闭先灰度观察），并配了一个 **60 秒限流的告警埋点**来定位丢上下文的场景。"
+
+**追问预备**：
+> **"为什么不用 `InheritableThreadLocal`？"**
+> 它只在**创建线程**时继承一次；线程池的线程是复用的、不会重建，所以拿到的还是第一次的旧值或 `null`。TTL 是**任务提交时**做快照 —— 这才是线程池场景的正解。
+>
+> **"为什么 scheduled 不能用 TaskDecorator？"**
+> `TaskDecorator` 是 Spring `ThreadPoolTaskExecutor` 的能力；`ScheduledThreadPoolExecutor` 是 JDK 原生类，没有这个钩子，只能靠 TTL 的 `TtlExecutors` 包一层。
+>
+> **"为什么不直接全开 fail-fast？"**
+> 系统刚上线时异步场景还多，全开会把线上打挂；所以先默认 `false`、靠告警埋点定位，等异步链路都清干净了再开。
+
+**⚠️ 如果面试官没听过 TTL（很常见）—— 用大白话讲 30 秒：**
+
+> "TTL 全称 **TransmittableThreadLocal**，是阿里开源的一个**增强版 ThreadLocal**。
+> 普通 `ThreadLocal` 只有当前线程能读；`InheritableThreadLocal` 会在**创建子线程**时复制一次 —— 但**线程池的线程是复用的、不会重建**，所以继承到的永远是第一次的值，等于失效。
+> TTL 换了时点：**在任务提交的那一刻捕获上下文快照**，任务在线程池里执行时先把快照回放进去、执行完再恢复。这样无论线程被复用多少次，每个任务看到的都是自己提交时的那份上下文。"
+
+**一句话记忆（被追问时脱口而出）**：
+
+> `InheritableThreadLocal` 在"**建线程**"时复制，一次性；TTL 在"**提交任务**"时快照，每次。
+> 线程池恰好是"线程只建一次、任务不断提交"的场景 —— 所以前者失效、后者正确。
+
+**如果追到底层实现**：
+
+> TTL 内部维护一个 `Transmitter` 存放快照；`TtlRunnable` 在被 `get()` 的那一刻把当前线程的 TTL 值打包进去，
+> `run()` 里先 `replay` 快照 → 执行任务 → 最后 `restore` 回池线程原来的值。
+> 所以**池线程本身的状态始终是干净的**，不会被上一个任务污染。
+
+**如果问"你用的时候踩过什么坑"**（你的真实经历，讲这个最加分）：
+
+> ① `ScheduledThreadPoolExecutor` **不支持** `TaskDecorator`，只能靠 `TtlExecutors.getTtlScheduledExecutorService` 包一层；
+> ② 设空值要用 `remove()` 而不是 `set("")`，否则池线程里会留空串脏值；
+> ③ 退出时不能用 `clear()`（嵌套调用会误清外层上下文），要用 Scope 恢复"进入前的值"。
 
 **Q6. 连接池用的什么？**
 > "Druid（不是 HikariCP，项目沿用了若依的技术选型）。"
@@ -156,8 +191,8 @@
 > ⚠️ **但我很清楚这个方案脆弱**——靠正则匹配 SQL 文本，格式化差异、值里含逗号都可能失配。更稳的做法是升级 MyBatis-Plus 或从 SQL 生成源头修。我 2026-07 重构过它让它适应更多情况，但**本质还是在补框架的洞**。"
 
 **Q10. 缓存怎么做的多租户隔离？一致性怎么保证？**
-> "key 前缀带 schema：`schema::业务常量`。租户维度来自 `ThreadLocal`。
-> 异步/批量场景取不到上下文，所以我加了**带 schema 参数的 key 重载**，把租户维度变成显式入参，用在缓存预热（遍历所有租户）、精准清理、全库清理三个场景。
+> "key 前缀带 schema：`schema::业务常量`。租户维度来自 TTL 上下文。
+> 换成 TTL 后异步场景能拿到上下文；但**批量/预热**场景（一次遍历多个租户）仍需要**带 schema 参数的 key 重载**，把租户维度变成显式入参，用在缓存预热（遍历所有租户）、精准清理、全库清理三个场景。
 > 一致性上我修过一次：**更新方法必须先删缓存再写库**，否则会出现读到旧值的情况。"
 
 **Q11. 租户开通、套餐切换的并发与事务？**
@@ -343,7 +378,7 @@
 ### 主动引导话术（把面试官引到你准备好的地方）
 
 - "这块让我印象最深的是**为什么我们没用 `search_path`**……"
-- "当时遇到一个挺隐蔽的 bug，是**异步线程里取不到租户上下文**……"
+- "当时遇到一个挺隐蔽的 bug，是**异步线程里取不到租户上下文**，后来用 TTL + 包装线程池系统性解决了……"
 - "这个方案有个我知道的隐患，是**SQL 解析失败会静默降级**……"
 
 ### 加分表达
