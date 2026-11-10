@@ -155,13 +155,79 @@ void createMap(Thread t, T firstValue) {
 
 
 ## 使用场景
-1. 线程间数据隔离，各线程的 ThreadLocal 互不影响
-2. 方便同一个线程使用某一对象，避免不必要的参数传递
-3. 全链路追踪中的 traceId 或者流程引擎中上下文的传递一般采用 ThreadLocal
-4. Spring 事务管理器采用了 ThreadLocal
-5. Spring MVC 的 RequestContextHolder 的实现使用了 ThreadLocal
 
-### 每个线程维护了一个“序列号”
+ThreadLocal 的应用本质只有两点：**线程间数据隔离**（各线程的 ThreadLocal 互不影响）和**同一线程内共享**（避免参数一路透传）。由此衍生出的典型场景可以归为几类：
+
+### 场景分类
+
+| 分类 | 典型场景 | 说明 |
+|:---|:---|:---|
+| 上下文传递 | 登录用户、租户 ID、请求参数、链路 traceId | 避免在方法链上层层透传参数 |
+| 线程封闭 | `SimpleDateFormat`、`Random`、`StringBuilder` | 把非线程安全对象限制在单线程内使用 |
+| 资源绑定 | 数据库连接、事务、`SqlSession`、`Session` | 保证同一线程拿到同一个资源实例 |
+| 框架上下文 | Spring 事务、`RequestContextHolder`、`SecurityContextHolder`、PageHelper 分页参数 | 框架内部隐式传递状态 |
+| 数据隔离 | 各线程独立的计数器、序列号、缓冲区 | 用空间换隔离，避免加锁 |
+
+### 1. 用户/请求上下文传递
+
+Web 应用中，用户信息从 Filter/Interceptor 进入后，Service、DAO、工具类都可能要用，层层传参侵入性太强。用 ThreadLocal 保存当前请求的上下文即可随处获取：
+
+```java
+public class UserContext {
+    private static final ThreadLocal<UserInfo> USER = new ThreadLocal<>();
+
+    public static void set(UserInfo user) { USER.set(user); }
+    public static UserInfo get()          { return USER.get(); }
+    public static void clear()            { USER.remove(); }
+}
+```
+
+在拦截器的 `preHandle` 中 `set`，在 `afterCompletion`（`finally` 语义）中 `clear`。**请求结束后必须清理**，否则 Tomcat 线程被复用时会读到上一个请求的用户信息，造成越权或串号。
+
+### 2. 链路追踪 traceId 与日志 MDC
+
+网关或入口处生成 `traceId`，用 ThreadLocal 保存，日志模板（如 `%X{traceId}`）直接输出，无需改任何业务方法签名。SLF4J 的 `MDC` 底层就是一个 ThreadLocal（配合 `InheritableThreadLocal` 传给子线程），这也是「全链路追踪中的 traceId 传递一般采用 ThreadLocal」的原因。
+
+### 3. 数据库连接与事务管理
+
+- **Spring 事务**：`TransactionSynchronizationManager` 用 ThreadLocal 保存当前线程绑定的 `Connection`/`DataSource` 及事务状态，从而保证同一线程内的多次 DAO 调用使用的是**同一个连接、同一个事务**；
+- **MyBatis**：`SqlSessionTemplate`/`SqlSessionManager` 用 ThreadLocal 绑定当前线程的 `SqlSession`；
+- **Hibernate**：`ThreadLocalSessionContext` 把 `Session` 绑定到线程（见下方 Session 示例）。
+
+这是 ThreadLocal 最经典的设计用途：**一个线程内共享同一个不可跨线程复用的资源**。
+
+### 4. 非线程安全对象的线程封闭
+
+`SimpleDateFormat`、`Random`、`StringBuilder` 等对象线程不安全，每个线程各持一个实例，既避免加锁又避免重复创建：
+
+```java
+private static final ThreadLocal<SimpleDateFormat> DF =
+        ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd"));
+```
+
+> 注意：线程池会复用线程，ThreadLocal 里的对象也跟着被复用，要保证对象内部状态在用之前是干净的（这也是推荐改用 `DateTimeFormatter` 的原因，它本身不可变、线程安全）。
+
+### 5. 框架中的隐式上下文
+
+| 框架 | ThreadLocal 用途 |
+|:---|:---|
+| Spring MVC | `RequestContextHolder` 持有当前请求的 `HttpServletRequest`/`Response` |
+| Spring Security | `SecurityContextHolder` 持有当前登录用户的认证信息 |
+| Spring 事务 | `TransactionSynchronizationManager` 持有连接与事务状态 |
+| MyBatis | `SqlSessionTemplate` 绑定当前线程的 `SqlSession` |
+| PageHelper | 分页参数放入 ThreadLocal，`startPage()` 之后的第一条 SQL 才会分页 |
+| Dubbo | `RpcContext` 保存隐式参数（attachment） |
+| SLF4J | `MDC` 保存日志上下文（traceId、userId） |
+
+### 使用注意事项（易踩坑）
+
+1. **线程池复用导致脏数据**：线程归还池后 ThreadLocal 不会自动清理，下一个任务可能读到上一个任务的值，必须在 `finally` 中 `remove()`。
+2. **异步/子线程取不到值**：`InheritableThreadLocal` 只在**创建子线程**时复制一次，线程池的线程早已创建，因此取不到；需要 `TransmittableThreadLocal`（阿里 TTL）或显式透传。
+3. **不要放大对象**：ThreadLocal 里的大对象会随线程存活长期驻留，等价于变相内存泄漏。
+4. **不要用它做跨线程通信**：它是线程封闭工具，不是共享手段，跨线程请用队列/并发容器。
+5. **声明为 `static final`**：避免 ThreadLocal 实例被回收后 key 变 null，且保证多次调用拿到的是同一个 key。
+
+### 6. 代码示例：每个线程维护一个“序列号”
 ```java
 public class SerialNum {
   // The next serial number to be assigned
@@ -178,7 +244,7 @@ public class SerialNum {
   }
 }
 ```
-### Session的管理
+### 7. 代码示例：Session 的管理
 ```java
 private static final ThreadLocal threadSession = new ThreadLocal();  
   
@@ -196,7 +262,7 @@ public static Session getSession() throws InfrastructureException {
 }  
 
 ```
-### SimpleDateFormat
+### 8. 代码示例：SimpleDateFormat（线程封闭）
 ```java
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
