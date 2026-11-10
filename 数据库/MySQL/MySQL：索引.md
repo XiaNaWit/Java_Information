@@ -157,19 +157,30 @@ mysql会一直向右匹配直到遇到范围查询(>、<、between、like)就停
 
 ## 11. 了解索引下推吗？
 
-MySQL 5.6引入了索引下推优化。默认开启，使用SET optimizer_switch = ‘index_condition_pushdown=off’;可以将其关闭。 
+### 概念
 
--  有了索引下推优化，可以在**减少回表次数** 
+索引下推（Index Condition Pushdown，简称 **ICP**）是 MySQL 5.6 引入的查询优化，默认开启，可通过
+`SET optimizer_switch = 'index_condition_pushdown=off';` 关闭。
 
--  在InnoDB中只针对二级索引有效
+一句话概括：**把 WHERE 中「能用索引判断」的过滤条件，从 MySQL Server 层「下推」到存储引擎层（InnoDB），在遍历二级索引的过程中就完成过滤，只有满足条件的索引项才回表。**
 
-官方文档中给的例子和解释如下：
+「下推」的含义来自 MySQL 的分层架构：
 
-在 people_table中有一个二级索引(zipcode，lastname，address)，查询是SELECT * FROM people WHERE zipcode=’95054′ AND lastname LIKE ‘%etrunia%’ AND address LIKE ‘%Main Street%’; 
+- **Server 层**：SQL 解析、优化、执行，以及最终的结果过滤；
+- **存储引擎层**：真正负责索引扫描、回表读数据。
 
-* 如果没有使用索引下推技术，则MySQL会通过zipcode=’95054’从存储引擎中查询对应的数据，返回到MySQL服务端，然后MySQL服务端基于lastname LIKE ‘%etrunia%’ and address LIKE ‘%Main Street%’来判断数据是否符合条件 
+没有 ICP 时，引擎只能按索引前缀定位记录，把整行返回给 Server 层，再由 Server 层用剩余条件过滤；有了 ICP，剩余条件被「推」到引擎层，在索引记录上就判断完了。
 
-* 如果使用了索引下推技术，则MYSQL首先会返回符合zipcode=’95054’的索引，然后根据lastname LIKE ‘%etrunia%’ and address LIKE ‘%Main Street%’来判断索引是否符合条件。如果符合条件，则根据该索引来定位对应的数据，如果不符合，则直接reject掉。
+收益总结：
+
+- **减少回表次数**（避免大量无谓的随机 IO）；
+- **减少存储引擎向 Server 层回传的行数**（降低两层之间的交互开销）。
+注意区分：
+
+- **覆盖索引**：返回的列全在索引里，**完全不需要回表**；
+- **索引下推**：仍然需要回表，但**只对通过索引条件过滤后的记录回表**。
+
+两者可以同时存在（`Using index, Using index condition`），此时已经是覆盖索引，ICP 的收益主要体现在减少传递到 Server 层的行数。
 
 ## 12. 怎么查看MySQL语句有没有用到索引？
 
