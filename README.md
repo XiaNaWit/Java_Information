@@ -2,13 +2,13 @@
 
 <p align="center">[Java工程师必备+学习+知识点+面试]：包含计算机网络知识、JavaSE、JVM、Spring、Springboot、SpringCloud、Mybatis、多线程并发、netty、MySQL、MongoDB、Elasticsearch、Redis、HBASE、RabbitMQ、RocketMQ、Pulsar、Kafka、Zookeeper、Linux、设计模式、智力题、项目架构、分布式相关、算法、面试题</p>
 
-<p align="center"><b>171</b> 篇文档 · <b>9</b> 大板块</p>
+<p align="center"><b>176</b> 篇文档 · <b>9</b> 大板块</p>
 
 ---
 
 ## 内容概览
 
-- [JAVA（44 篇）](#java)
+- [JAVA（49 篇）](#java)
 - [中间件（20 篇）](#中间件)
 - [数据库（23 篇）](#数据库)
 - [计算机网络（14 篇）](#计算机网络)
@@ -69,9 +69,14 @@
 - [线上故障排查](JAVA/Java-JVM/线上故障排查.md)
 - [JVM常见面试题](JAVA/Java-JVM/JVM常见面试题.md)
 
-#### Spring（6 篇）
+#### Spring（11 篇）
 
 - [Spring](JAVA/Spring/Spring.md)
+- [Spring-IoC](JAVA/Spring/Spring-IoC.md)
+- [Spring-Bean](JAVA/Spring/Spring-Bean.md)
+- [Spring-AOP](JAVA/Spring/Spring-AOP.md)
+- [Spring-事务](JAVA/Spring/Spring-事务.md)
+- [Spring-设计模式](JAVA/Spring/Spring-设计模式.md)
 - [SpringBoot](JAVA/Spring/SpringBoot.md)
 - [springcloud](JAVA/Spring/springcloud.md)
 - [SpringMVC](JAVA/Spring/SpringMVC.md)
