@@ -86,46 +86,148 @@ MySQL 通过两阶段提交（2PC）保证 redo log 和 binlog 的一致性：
 
 ## 4. InnoDB MVCC 实现原理
 
-MVCC（Multi-Version Concurrency Control）是 InnoDB 实现 READ COMMITTED 和 REPEATABLE READ 隔离级别的关键机制。
+MVCC（Multi-Version Concurrency Control，多版本并发控制）让 InnoDB 在 **不加锁** 的情况下实现「读写不阻塞」：读操作访问某个历史版本，写操作生成新版本，两者互不干扰。它是 READ COMMITTED 和 REPEATABLE READ 两个隔离级别的实现基础。
 
-### 隐式字段
+### 先记住三件套
 
-InnoDB 聚簇索引中的每一行记录包含三个隐藏列：
+| 组件 | 存放位置 | 作用 |
+|:---|:---|:---|
+| **隐藏字段**（trx_id、roll_ptr、row_id） | 聚簇索引记录 | 标记「这条记录是哪个事务改的」「上一个版本在哪」 |
+| **undo log 版本链** | undo 表空间 | 保存历史版本，串成一条链 |
+| **ReadView** | 内存（事务私有） | 判断「版本链上哪个版本对当前事务可见」 |
 
-| 字段 | 说明 |
-|:---|:---|
-| **DB_TRX_ID** | 记录最后一次修改该记录的事务 ID |
-| **DB_ROLL_PTR** | 回滚指针，指向 undo log 中的上一个版本 |
-| **DB_ROW_ID** | 隐藏自增 ID（表无主键时使用） |
+一句话：**版本链负责「存」旧版本，ReadView 负责「选」可见版本**。先有 ReadView，再沿版本链从新到旧找第一个可见版本。
 
-### Undo 版本链
+### 隐藏字段
 
-对数据行的每次修改都会在 undo log 中生成一个新版本，通过回滚指针串联成链。
+InnoDB 聚簇索引的记录除了用户定义的列，还有几个隐藏信息：
+
+| 字段 | 长度 | 说明 |
+|:---|:---|:---|
+| **DB_TRX_ID** | 6 字节 | 最后一次插入或修改该记录的事务 ID |
+| **DB_ROLL_PTR** | 7 字节 | 回滚指针，指向 undo log 中该记录的上一个版本 |
+| **DB_ROW_ID** | 6 字节 | 隐藏自增 ID，表没有主键且没有唯一非空索引时使用 |
+| **deleted_flag** | 1 bit（记录头） | 删除标记。`DELETE` 只是把它置 1，并非物理删除 |
+
+> 注意：`deleted_flag` 不在隐藏列里，而在记录头信息中，但它参与可见性判断——被标记删除的记录，只有「删除操作对自己不可见」时才不会被读到。
+
+### undo log 与版本链
+
+每条记录通过 `DB_ROLL_PTR` 指向 undo log 里的上一个版本，而每个 undo 版本同样带 `trx_id` 和 `roll_ptr`，于是形成一条**从新到旧的单向链表**：
 
 ```
-[版本3(最新)] ← 回滚指针 ← [版本2] ← 回滚指针 ← [版本1(最旧)]
+当前行 (trx_id=30)
+   │ roll_ptr
+   ▼
+undo 版本1 (trx_id=20) ──roll_ptr──► undo 版本2 (trx_id=10)
 ```
+
+两种 undo log 的生命周期不同：
+
+| 类型 | 产生时机 | 何时可删 |
+|:---|:---|:---|
+| **insert undo** | `INSERT` | 事务提交后即可删除（插入的记录本来对其他事务不可见，无需保留旧版本） |
+| **update undo** | `UPDATE` / `DELETE` | 供 MVCC 使用，提交后仍保留，由 **purge 线程**在确认没有事务需要时清理 |
+
+补充两点：
+
+- `UPDATE` 生成 undo 时记录的是**反向操作**（把被改列改回旧值），因此版本链上的「旧版本」是按需回放出来的，不是整行复制；
+- `DELETE` 生成 update undo，并把记录头 `deleted_flag = 1`，版本链上仍能找到它，所以删除后长事务依然能读到。
 
 ### ReadView
 
-ReadView 是事务在某个时刻对事务系统的快照，包含：
-- **m_ids**：当前活跃的读写事务 ID 列表
-- **min_trx_id**：m_ids 中的最小值
-- **max_trx_id**：m_ids 中的最大值 + 1
+ReadView 是事务执行快照读时生成的一个「可见性快照」，包含四个字段：
 
-判断规则：
-- `trx_id < min_trx_id` → 该版本在 ReadView 创建前已提交，**可见**
-- `trx_id >= max_trx_id` → 该版本在 ReadView 创建后才生成，**不可见**
-- `min_trx_id <= trx_id < max_trx_id`：
-  - 若 trx_id 在 m_ids 中（该事务仍活跃）→ **不可见**
-  - 若 trx_id 不在 m_ids 中（已提交）→ **可见**
+| 字段 | 含义 |
+|:---|:---|
+| **m_ids** | 生成 ReadView 时，系统中**活跃（未提交）**的读写事务 ID 列表 |
+| **min_trx_id** | m_ids 中的最小值 |
+| **max_trx_id** | 生成 ReadView 时系统**下一个将要分配**的事务 ID（即 m_ids 最大值 + 1） |
+| **creator_trx_id** | 创建这个 ReadView 的事务自己的 ID |
 
-不可见时沿回滚指针找下一个版本继续判断。
+可见性判断规则（对版本链上某个版本的 `trx_id`）：
+
+| 条件 | 结论 | 原因 |
+|:---|:---|:---|
+| `trx_id == creator_trx_id` | **可见** | 自己改的数据自己能看到 |
+| `trx_id < min_trx_id` | **可见** | 生成 ReadView 前它已提交 |
+| `trx_id >= max_trx_id` | **不可见** | ReadView 生成后它才开启，必然未提交 |
+| `min_trx_id <= trx_id < max_trx_id` | 看是否在 `m_ids` 中：**在 → 不可见**（仍活跃）；**不在 → 可见**（已提交） | — |
+
+遍历过程：从当前记录开始判断，不可见就顺着 `roll_ptr` 取上一个版本继续判断，直到找到可见版本；如果整条链都不可见，说明该行对当前事务**不存在**（这是「可重复读」看不到新插入行的原因）。
+
+### RC 与 RR 的本质区别：ReadView 的生成时机
+
+这是 MVCC 最核心的考点，两者用的机制完全一样，**区别只在 ReadView 何时创建、复用多久**：
+
+| 隔离级别 | ReadView 生成时机 | 效果 |
+|:---|:---|:---|
+| **READ COMMITTED** | **每次快照读**都生成一个新的 ReadView | 每次都能读到「此刻已提交」的最新数据，即不可重复读 |
+| **REPEATABLE READ** | **事务中第一次快照读**时生成，之后整个事务复用这一个 ReadView | 整个事务看到的是同一份快照，即「可重复读」 |
+
+时间线示例（初始 `balance = 100`）：
+
+```
+时刻   事务 A（RR）                          事务 B
+t1     BEGIN;
+t2     SELECT balance;  → 100（生成 ReadView，m_ids 含 B）
+t3                                          BEGIN; UPDATE balance = 200; COMMIT;
+t4     SELECT balance;  → 100（复用 t2 的 ReadView，B 的 trx_id 仍不可见）
+t5     COMMIT;
+```
+
+把 A 的隔离级别换成 RC，`t4` 就会读到 200——因为每次都重新生成 ReadView，此时 B 已提交、不在 `m_ids` 里。
+
+> 由此可推出两个常被追问的点：
+> 1. **RR 的快照建立于「第一次快照读」那一刻，而不是 `BEGIN` 那一刻**。因此 `BEGIN` 之后、第一次 `SELECT` 之前，其他事务提交的修改，在本事务第一次读时是**能读到**的（此时创建 ReadView，对方已提交、不在 `m_ids` 中）。
+> 2. **一致性读不保证一定读到旧值**：若版本链上的旧版本已被 purge 清理，只能退化为读最新版本（长事务叠加大量更新时会出现）。
 
 ### 快照读与当前读
 
-- **快照读**：普通的 SELECT 操作，不加锁，读的是 MVCC 提供的快照版本
-- **当前读**：SELECT ... FOR UPDATE / LOCK IN SHARE MODE 及 INSERT/UPDATE/DELETE，读取最新数据并加锁
+MVCC 只作用于快照读，这是最容易被忽略的边界：
+
+| 语句 | 类型 | 读什么 | 是否加锁 |
+|:---|:---|:---|:---|
+| 普通 `SELECT` | **快照读**（一致性读） | ReadView 判定的可见版本 | 不加锁 |
+| `SELECT ... FOR UPDATE` / `FOR SHARE` | **当前读** | 最新已提交版本 | 加锁（RR 下为 Next-Key Lock） |
+| `INSERT` / `UPDATE` / `DELETE` | **当前读** | 最新版本 | 加锁 |
+
+关键结论：
+
+- **快照读靠 MVCC，当前读靠锁**，两者配合才能满足隔离级别；
+- 一旦语句是当前读，ReadView 就完全不起作用，读到的一定是最新数据，这也是「RR 下仍可能幻读」的根源（见下）；
+- `UPDATE` 的 `WHERE` 条件扫描时，在 RC 下还有 **semi-consistent read（半一致性读）**：不匹配的行提前释放锁，减少锁冲突；RR 下不启用。
+
+### RR 下为什么还会幻读
+
+RR 只在**快照读**场景下靠 MVCC 屏蔽幻读，当前读仍要依赖间隙锁：
+
+```
+时刻   事务 A（RR）                                事务 B
+t1     BEGIN;
+t2     SELECT * FROM t WHERE id = 5;  → 空（快照建立）
+t3                                                INSERT INTO t(id, c) VALUES (5, 1); COMMIT;
+t4     UPDATE t SET c = 2 WHERE id = 5;  → 当前读，能看到 B 插入的行，affected rows = 1
+t5     SELECT * FROM t WHERE id = 5;  → 能读到这一行（因为是自己改的）
+```
+
+`t2` 和 `t5` 两次快照读之间凭空多出一行，这就是 RR 下仍存在的幻读。因此面试标准回答是：**RR 通过「MVCC（快照读）+ Next-Key Lock（当前读）」基本解决幻读，但两者都绕开的场景仍会出现**（详见第 6 节）。
+
+### undo log 什么时候清理：purge 与长事务
+
+- 后台 **purge 线程**负责清理不再需要的 update undo：只要还有 ReadView 可能需要某个版本，该版本就不能删；
+- 判断依据是「系统中最早的 ReadView」，因此**一个长事务会拖住整个实例的 undo 清理**；
+- 后果：版本链越来越长（每次读都要遍历更多版本）、undo 表空间膨胀（`ibdata` 或独立 undo 文件持续增长且不回收）、历史版本堆积导致查询变慢。
+
+> 实践建议：避免长事务（`information_schema.innodb_trx` 中 `trx_started` 很早的会话）；`SHOW ENGINE INNODB STATUS` 的 `History list length` 持续增长，通常就是有大事务或长事务卡住了 purge。
+
+### 常见误区
+
+1. **「MVCC 让读写完全无锁」**——错。只有快照读不加锁，当前读和写操作照样加锁。
+2. **「RR 靠 MVCC 就解决了幻读」**——错。当前读仍需 Next-Key Lock，且如上例仍可能幻读。
+3. **「版本链上存的是整行副本」**——错。undo 记录的是反向操作（或旧值），按需回放。
+4. **「删除是物理删除」**——错。`DELETE` 只是置 `deleted_flag`，由 purge 真正清理。
+5. **「MVCC 对所有存储引擎有效」**——错。只有 InnoDB 实现了 MVCC，MyISAM 只能表锁。
 
 ## 5. 混合使用存储引擎的问题
 
@@ -135,7 +237,7 @@ ReadView 是事务在某个时刻对事务系统的快照，包含：
 
 ## 6. Next-Key Lock 解决幻读
 
-MySQL 在 REPEATABLE READ 级别通过 **MVCC + Next-Key Lock** 解决幻读。
+MySQL 在 REPEATABLE READ 级别通过 **MVCC（快照读）+ Next-Key Lock（当前读）** 基本解决幻读，两者都绕开的边界情况见第 4 节「RR 下为什么还会幻读」。
 
 Next-Key Lock = Record Lock（行锁）+ Gap Lock（间隙锁），锁定一个前开后闭区间。
 
