@@ -63,7 +63,9 @@ public void testTransaction2(){
 
 ## 事务边界
 
-**什么是事务边界**：一次事务从「开启（或加入已有事务）」到「提交/回滚」的范围，就是这个事务的边界。`@Transactional` 是 AOP 实现的，所以边界天然等于「**代理方法的一次调用**」：
+### 什么是事务边界
+
+一次事务从「开启（或加入已有事务）」到「提交/回滚」的范围，就是这个事务的边界。`@Transactional` 是 AOP 实现的，所以边界天然等于「**代理方法的一次调用**」：
 
 ```text
 调用方 → 代理对象（开启事务）→ 目标方法执行 → 正常返回（提交）
@@ -76,7 +78,7 @@ public void testTransaction2(){
 - 事务内所有通过代理进入、传播行为为 `REQUIRED`（默认）的方法都**加入**这个边界，任何一个抛出可回滚异常，整个边界内的操作一起回滚。
 - 边界的位置决定事务粒度：粒度越大，锁和连接持有时间越长；粒度越小，越容易出现「部分成功」。
 
-**边界画错的三种典型**
+### 边界画错的三种典型
 
 | 问题 | 现象 | 正确做法 |
 |:---|:---|:---|
@@ -104,6 +106,84 @@ stockService.deduct(skuId);
 ```
 
 > 需要「事务提交后再做」的动作（发消息、清缓存、通知），不要直接写在事务里，用 `TransactionSynchronizationManager.registerSynchronization(...)` 的 `afterCommit` 回调，或使用 `@TransactionalEventListener(phase = AFTER_COMMIT)`。
+
+### 哪些异常会回滚
+
+**默认规则：只对 `RuntimeException` 和 `Error` 回滚；所有受检异常（含 `IOException`）默认不回滚，事务照常提交。**
+
+这条判断写死在 `DefaultTransactionAttribute#rollbackOn` 里：
+
+```java
+public boolean rollbackOn(Throwable ex) {
+    return (ex instanceof RuntimeException || ex instanceof Error);
+}
+```
+
+| 异常 | 受检性 | 默认回滚 | 典型例子 |
+|:---|:---|:---|:---|
+| `RuntimeException` 子类 | 非受检 | ✅ | `NullPointerException`、`IllegalArgumentException` |
+| `Error` 子类 | 非受检 | ✅ | `OutOfMemoryError`、`StackOverflowError` |
+| Spring `DataAccessException` | 非受检（Spring 翻译后） | ✅ | `DuplicateKeyException`、`DeadlockLoserDataAccessException` |
+| `IOException` / `FileNotFoundException` | 受检 | ❌ **提交** | 文件读写、网络流操作 |
+| `InterruptedException` | 受检 | ❌ **提交** | 线程被中断 |
+| 自定义 `extends Exception` | 受检 | ❌ **提交** | 业务受检异常 |
+| 原始 JDBC 的 `SQLException` | 受检 | ❌ **提交** | 手写 JDBC 且方法声明 `throws SQLException` |
+
+三条容易踩的：
+
+- **`IOException` 不回滚**：方法签名 `throws IOException` 时，文件读写失败抛出的异常穿出代理后**事务仍然提交**，之前执行的 DB 操作不会撤销；
+- **`SQLException` 要分情况**：`JdbcTemplate`、MyBatis 会把 `SQLException` 翻译成非受检的 `DataAccessException`，因此能回滚；自己拿 `Connection` 写原生 JDBC 且声明 `throws SQLException`，则默认不回滚；
+- **`Error` 虽然回滚，但不一定滚得掉**：`OutOfMemoryError` 之后可能连回滚所需的资源都申请不到。
+
+统一配置：
+
+```java
+@Transactional(rollbackFor = Exception.class)   // 受检 + 非受检全回滚（推荐写法）
+@Transactional(rollbackFor = Exception.class, noRollbackFor = BizWarnException.class)  // 特定业务异常照常提交
+```
+
+`rollbackFor` 按 `isAssignableFrom` 匹配，配 `Exception.class` 即可覆盖全部；`noRollbackFor` 对精确类别的优先级高于宽泛的 `rollbackFor`，适合「校验类异常只提示、主流程数据要保留」的场景。注意它只决定**回不回滚**，不改变异常继续向上抛的行为。
+
+### 异常出现在哪个位置，决定回不回滚
+
+同一种异常，抛出位置不同，结果完全不同：
+
+| 位置 | 结果 | 说明 |
+|:---|:---|:---|
+| 事务方法内抛出、未被捕获、穿出代理 | 按类型规则回滚 | 正常路径 |
+| 方法内 `catch` 且不再抛 | 提交 | 代理感知不到异常；需要 `setRollbackOnly()` |
+| `catch` 后包装成 `RuntimeException` 再抛 | 回滚 | 包装后满足默认规则，但原始异常语义会丢 |
+| 内层 `REQUIRED` 抛异常、外层 catch 后继续 | **整笔回滚** | 内层已把事务标记 rollback-only，外层提交时抛 `UnexpectedRollbackException` |
+| 内层 `REQUIRES_NEW` 抛异常、外层 catch | 只回滚内层 | 独立物理事务，外层可以继续提交 |
+| 内层 `NESTED` 抛异常、外层 catch | 回滚到 savepoint | 需要支持 savepoint 的事务管理器（JDBC 系） |
+| 子线程 / 线程池中抛异常 | 不影响当前事务 | 事务上下文绑定线程；除非 `Future.get()` 把异常带回主线程 |
+| 提交阶段（commit）失败 | 结果不确定 | 可能已落盘但响应丢失，只能靠幂等 + 对账 |
+
+关于 `UnexpectedRollbackException`：`AbstractPlatformTransactionManager` 的 `globalRollbackOnParticipationFailure` 默认是 `true`，任一「参与者」失败都会把整个事务标记为 rollback-only。所以**「内层失败不影响外层」不能靠 try-catch 实现，只能换传播行为**（`REQUIRES_NEW` 或 `NESTED`）。
+
+### 回滚覆盖不到的东西
+
+事务只能撤销「同一连接上的数据库操作」，边界之外的动作一律不会被回滚：
+
+| 动作 | 是否回滚 | 处理方式 |
+|:---|:---|:---|
+| InnoDB 的 DML | ✅ | — |
+| 发 MQ、调 RPC/HTTP | ❌ | 移到 `afterCommit`、本地消息表、事务消息 |
+| 写文件、上传 OSS | ❌ | 补偿删除 + 定时对账 |
+| 写 Redis / 本地缓存 | ❌ | 提交后删缓存 |
+| `REQUIRES_NEW` 已提交的子事务 | ❌ | 外层业务补偿 |
+| MyISAM 表、DDL | ❌ | 换 InnoDB；DDL 会隐式提交当前事务 |
+
+### 典型追问：IO 异常到底会不会回滚
+
+分四层看：
+
+1. **异常类型**：`IOException` 是受检异常，默认不回滚 → 必须配 `rollbackFor = Exception.class`；
+2. **异常位置**：只在事务方法内抛出且穿出代理才可能触发回滚；写在 `afterCommit` 回调里的 IO 异常，此时事务已提交，没有任何事务可回滚；
+3. **数据库侧**：满足前两条时，同一连接上的 DML 会一起回滚；
+4. **文件侧**：已经写入或上传成功的文件**不会**被撤销，只能补偿（删临时文件、标记脏数据、定时对账）。
+
+因此「文件 IO + 数据库」的组合最典型的不一致有两种：**DB 回滚了、文件还在**，以及 **DB 提交了、文件没写成功**。两种都只能靠补偿逻辑或「先落库、再异步处理文件」来兜。
 
 ## spring事务失效的场景
 
